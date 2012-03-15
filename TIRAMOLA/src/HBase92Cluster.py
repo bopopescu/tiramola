@@ -82,7 +82,7 @@ class HBase92Cluster(object):
         slaves = open('/tmp/slaves', 'w')
         
         # copy necessary templates to /tmp to alter them
-        shutil.copy("./templates/hbase92/205/core-site.xml", "/tmp/core-site.xml")
+        shutil.copy("./templates/hadoop205/core-site.xml", "/tmp/core-site.xml")
         shutil.copy("./templates/hadoop205/mapred-site.xml", "/tmp/mapred-site.xml")
         shutil.copy("./templates/hadoop205/hdfs-site.xml", "/tmp/hdfs-site.xml")
         shutil.copy("./templates/hbase92/hbase-site.xml", "/tmp/hbase-site.xml")
