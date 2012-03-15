@@ -277,7 +277,10 @@ class Utils(object):
             self.trans_cost = cfg.get("config", "trans_cost")
             self.gain = cfg.get("config", "gain")
             self.serv_throughput = cfg.get("config", "serv_throughput")
-            self.gamma = cfg.get("config", "gamma")
+            try:
+                self.gamma = cfg.get("config", "gamma")
+            except:
+                self.gamma = 0
             
             ## Reads the monitoring thresholds
             self.thresholds_add = {}
