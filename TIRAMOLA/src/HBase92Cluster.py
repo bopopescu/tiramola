@@ -9,7 +9,7 @@ import Utils
 from pysqlite2 import dbapi2 as sqlite
 import pexpect, os, shutil, fileinput, sys, logging
 
-class HBaseCluster(object):
+class HBase92Cluster(object):
     '''
     This class holds all nodes of the db in the virtual cluster. It can start/stop individual 
     daemons as needed, thus adding/removing nodes at will. It also sets up the configuration 
@@ -82,14 +82,14 @@ class HBaseCluster(object):
         slaves = open('/tmp/slaves', 'w')
         
         # copy necessary templates to /tmp to alter them
-        shutil.copy("./templates/hadoop/core-site.xml", "/tmp/core-site.xml")
-        shutil.copy("./templates/hadoop/mapred-site.xml", "/tmp/mapred-site.xml")
-        shutil.copy("./templates/hadoop/hdfs-site.xml", "/tmp/hdfs-site.xml")
-        shutil.copy("./templates/hbase/hbase-site.xml", "/tmp/hbase-site.xml")
-        shutil.copy("./templates/hadoop/hadoop-metrics.properties", "/tmp/hadoop-metrics.properties")
-        shutil.copy("./templates/hbase/hadoop-metrics.properties", "/tmp/hbase.hadoop-metrics.properties")
-        shutil.copy("./templates/hbase/hbase-env.sh","/tmp/hbase-env.sh")
-        shutil.copy("./templates/hbase/hadoop-env.sh","/tmp/hadoop-env.sh")
+        shutil.copy("./templates/hbase92/205/core-site.xml", "/tmp/core-site.xml")
+        shutil.copy("./templates/hadoop205/mapred-site.xml", "/tmp/mapred-site.xml")
+        shutil.copy("./templates/hadoop205/hdfs-site.xml", "/tmp/hdfs-site.xml")
+        shutil.copy("./templates/hbase92/hbase-site.xml", "/tmp/hbase-site.xml")
+        shutil.copy("./templates/hadoop205/hadoop-metrics.properties", "/tmp/hadoop-metrics.properties")
+        shutil.copy("./templates/hbase92/hadoop-metrics.properties", "/tmp/hbase.hadoop-metrics.properties")
+        shutil.copy("./templates/hbase92/hbase-env.sh","/tmp/hbase-env.sh")
+        shutil.copy("./templates/hbase92/hadoop-env.sh","/tmp/hadoop-env.sh")
         
 #        core_site = open('/tmp/core-site.xml', 'rw')
 #        mapred_site = open('/tmp/mapred-site.xml', 'rw')

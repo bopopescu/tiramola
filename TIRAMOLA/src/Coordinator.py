@@ -10,7 +10,7 @@ from Deamon import Daemon
 #import Utils
 import sys, os, time, logging
 import EucaCluster, MonitorVms, DecisionMaker , OpenStackCluster, FSMDecisionMaker
-import  HBaseCluster, VoldemortCluster, CassandraCluster, RiakCluster
+import  HBase92Cluster, HBaseCluster, VoldemortCluster, CassandraCluster, RiakCluster
 
 class MyDaemon(Daemon):
     
@@ -79,6 +79,8 @@ class MyDaemon(Daemon):
             
             if self.utils.cluster_type == "HBASE":
                 nosqlcluster = HBaseCluster.HBaseCluster(self.utils.cluster_name)
+            if self.utils.cluster_type == "HBASE92":
+                nosqlcluster = HBase92Cluster.HBase92Cluster(self.utils.cluster_name)
             if self.utils.cluster_type == "VOLDEMORT":
                 nosqlcluster = VoldemortCluster.VoldemortCluster(self.utils.cluster_name)
             if self.utils.cluster_type == "CASSANDRA":
