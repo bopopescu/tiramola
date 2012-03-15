@@ -11,10 +11,18 @@
 	<!-- Assume large instances. -->
 	<property>
 		<name>mapred.tasktracker.map.tasks.maximum</name>
-		<value>8</value>
+		<value>3</value>
 	</property>
 	<property>
 		<name>mapred.tasktracker.reduce.tasks.maximum</name>
-		<value>4</value>
+		<value>3</value>
 	</property>
+	<property>
+		<name>mapred.child.java.opts</name>
+		<value>-Xmx512m</value>
+	</property>
+	<property>
+		<name>mapred.task.timeout</name>
+		<value>60000000</value>
+</property>
 </configuration>

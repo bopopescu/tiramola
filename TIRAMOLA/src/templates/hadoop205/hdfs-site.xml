@@ -20,4 +20,13 @@
   		<name>dfs.datanode.max.xcievers</name>
   		<value>20480</value>
 	</property>
+	<property>
+		<name>dfs.block.size</name>
+		<value>268435456</value>
+	</property>
+	<property>
+		<name>dfs.support.append</name>
+		<value>true</value>
+	</property>
+	
 </configuration>
