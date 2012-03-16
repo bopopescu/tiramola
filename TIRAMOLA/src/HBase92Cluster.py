@@ -82,12 +82,10 @@ class HBase92Cluster(object):
         slaves = open('/tmp/slaves', 'w')
         
         # copy necessary templates to /tmp to alter them
-        shutil.copy("./templates/hadoop205/core-site.xml", "/tmp/core-site.xml")
-        shutil.copy("./templates/hadoop205/mapred-site.xml", "/tmp/mapred-site.xml")
-        shutil.copy("./templates/hadoop205/hdfs-site.xml", "/tmp/hdfs-site.xml")
+        shutil.copy("./templates/hadoop101/core-site.xml", "/tmp/core-site.xml")
+        shutil.copy("./templates/hadoop101/mapred-site.xml", "/tmp/mapred-site.xml")
+        shutil.copy("./templates/hadoop101/hdfs-site.xml", "/tmp/hdfs-site.xml")
         shutil.copy("./templates/hbase92/hbase-site.xml", "/tmp/hbase-site.xml")
-        shutil.copy("./templates/hadoop205/hadoop-metrics.properties", "/tmp/hadoop-metrics.properties")
-        shutil.copy("./templates/hbase92/hadoop-metrics.properties", "/tmp/hbase.hadoop-metrics.properties")
         shutil.copy("./templates/hbase92/hbase-env.sh","/tmp/hbase-env.sh")
         shutil.copy("./templates/hbase92/hadoop-env.sh","/tmp/hadoop-env.sh")
         
@@ -98,8 +96,6 @@ class HBase92Cluster(object):
         core_site = '/tmp/core-site.xml'
         mapred_site = '/tmp/mapred-site.xml'
         hbase_site = '/tmp/hbase-site.xml'
-        hadoop_properties = "/tmp/hadoop-metrics.properties"
-        hbase_properties = "/tmp/hbase.hadoop-metrics.properties"
         
         i = 0
         hosts.write("127.0.0.1\tlocalhost\n")
@@ -112,7 +108,7 @@ class HBase92Cluster(object):
             
             ## Check for installation dirs, otherwise exit with error message
             stderr_all = []
-            stdin, stdout, stderr = ssh.exec_command('ls /opt/hadoop-0.20.205.0/')
+            stdin, stdout, stderr = ssh.exec_command('ls /opt/hadoop-1.0.1/')
             stderr_all.append(stderr.readlines())
             stdin, stdout, stderr = ssh.exec_command('ls /opt/hbase-0.92.0/')
             stderr_all.append(stderr.readlines())
@@ -141,12 +137,6 @@ class HBase92Cluster(object):
                     print line
                 for line in fileinput.FileInput(mapred_site,inplace=1):
                     line = line.replace("JOBTRACKER_IP",host_template+"master").strip()
-                    print line
-                for line in fileinput.FileInput(hadoop_properties,inplace=1):
-                    line = line.replace("GMETADHOST_IP",host_template+"master").strip()
-                    print line
-                for line in fileinput.FileInput(hbase_properties,inplace=1):
-                    line = line.replace("GMETADHOST_IP",host_template+"master").strip()
                     print line
                 
                 ## create namenode/datanode dirs
@@ -214,6 +204,9 @@ class HBase92Cluster(object):
             ## (workaround for HDFS-127:http://wiki.apache.org/hadoop/Hbase/Troubleshooting#A7) 
             stdin, stdout, stderr = ssh.exec_command('ulimit -HSn 32768')
             
+            ## Sync clocks over IPv6
+            stdin, stdout, stderr = ssh.exec_command('ntpdate 2.pool.ntp.org')
+            
             transport = paramiko.Transport((node.public_dns_name, 22))
             transport.connect(username = 'root', password = 'secretpw')
             transport.open_channel("session", node.public_dns_name, "localhost")
@@ -233,29 +226,18 @@ class HBase92Cluster(object):
             # Copy files (/etc/hosts, masters, slaves and conf templates) removing empty lines
             sftp.put( "/tmp/hosts", "/etc/hosts")
             os.system("sed -i '/^$/d' /tmp/core-site.xml")
-            sftp.put( "/tmp/core-site.xml","/opt/hadoop-0.20.205.0/conf/core-site.xml")
-            sftp.put( "/tmp/core-site.xml","/opt/hadoop-0.20.205.0/etc/hadoop/core-site.xml")
+            sftp.put( "/tmp/core-site.xml","/opt/hadoop-1.0.1/conf/core-site.xml")
             os.system("sed -i '/^$/d' /tmp/mapred-site.xml")
-            sftp.put( "/tmp/mapred-site.xml","/opt/hadoop-0.20.205.0/conf/mapred-site.xml")
-            sftp.put( "/tmp/mapred-site.xml","/opt/hadoop-0.20.205.0/etc/hadoop/mapred-site.xml")
+            sftp.put( "/tmp/mapred-site.xml","/opt/hadoop-1.0.1/conf/mapred-site.xml")
             os.system("sed -i '/^$/d' /tmp/hdfs-site.xml")
-            sftp.put( "/tmp/hdfs-site.xml","/opt/hadoop-0.20.205.0/etc/hadoop/hdfs-site.xml")
-            sftp.put( "/tmp/masters", "/opt/hadoop-0.20.205.0/etc/hadoop/masters")
-            sftp.put( "/tmp/slaves", "/opt/hadoop-0.20.205.0/etc/hadoop/slaves")
-            sftp.put( "/tmp/hdfs-site.xml","/opt/hadoop-0.20.205.0/conf/hdfs-site.xml")
-            sftp.put( "/tmp/masters", "/opt/hadoop-0.20.205.0/conf/masters")
-            sftp.put( "/tmp/slaves", "/opt/hadoop-0.20.205.0/conf/slaves")
+            sftp.put( "/tmp/hdfs-site.xml","/opt/hadoop-1.0.1/conf/hdfs-site.xml")
+            sftp.put( "/tmp/masters", "/opt/hadoop-1.0.1/conf/masters")
+            sftp.put( "/tmp/slaves", "/opt/hadoop-1.0.1/conf/slaves")
             os.system("sed -i '/^$/d' /tmp/hbase-site.xml")
             sftp.put( "/tmp/hbase-site.xml", "/opt/hbase-0.92.0/conf/hbase-site.xml")
             sftp.put( "/tmp/slaves", "/opt/hbase-0.92.0/conf/regionservers")
-            os.system("sed -i '/^$/d' /tmp/hadoop-metrics.properties")
-            sftp.put( "/tmp/hadoop-metrics.properties", "/opt/hadoop-0.20.205.0/conf/hadoop-metrics.properties")
-            sftp.put( "/tmp/hadoop-metrics.properties", "/opt/hadoop-0.20.205.0/etc/hadoop/hadoop-metrics.properties")
-            os.system("sed -i '/^$/d' /tmp/hbase.hadoop-metrics.properties")
-            sftp.put( "/tmp/hbase.hadoop-metrics.properties", "/opt/hbase-0.92.0/conf/hadoop-metrics.properties")
             sftp.put( "/tmp/hbase-env.sh", "/opt/hbase-0.92.0/conf/hbase-env.sh")
-            sftp.put( "/tmp/hadoop-env.sh", "/opt/hadoop-0.20.205.0/conf/hadoop-env.sh")
-            sftp.put( "/tmp/hadoop-env.sh", "/opt/hadoop-0.20.205.0/etc/hadoop/hadoop-env.sh")
+            sftp.put( "/tmp/hadoop-env.sh", "/opt/hadoop-1.0.1/conf/hadoop-env.sh")
             sftp.close()
             
             ssh.close()
@@ -298,7 +280,7 @@ class HBase92Cluster(object):
         ssh.connect(self.cluster[host_template+"master"].public_dns_name, username='root', password='secretpw')
         if not reconfigure:
             ## format the namenode (all previous data will be lost!!!
-            stdin, stdout, stderr = ssh.exec_command('echo "Y" | /opt/hadoop-0.20.205.0/bin/hadoop namenode -format')
+            stdin, stdout, stderr = ssh.exec_command('echo "Y" | /opt/hadoop-1.0.1/bin/hadoop namenode -format')
             self.my_logger.debug("Namenode formatted:" + str(stderr.readlines()))
         ssh.close()
         
@@ -316,9 +298,9 @@ class HBase92Cluster(object):
 #        print self.host_template+"master"
 #        print self.cluster[self.host_template+"master"].public_dns_name
         ssh.connect(self.cluster[self.host_template+"master"].public_dns_name, username='root', password='secretpw')
-        stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-0.20.205.0/bin/start-dfs.sh')
+        stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-1.0.1/bin/start-dfs.sh')
         self.my_logger.debug(str(stdout.readlines()))
-        stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-0.20.205.0/bin/start-mapred.sh')
+        stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-1.0.1/bin/start-mapred.sh')
         self.my_logger.debug(str(stdout.readlines()))
         stdin, stdout, stderr = ssh.exec_command('/opt/hbase-0.92.0/bin/start-hbase.sh')
         self.my_logger.debug(str(stdout.readlines()))
@@ -332,9 +314,9 @@ class HBase92Cluster(object):
         ssh.connect(self.cluster[self.host_template+"master"].public_dns_name, username='root', password='secretpw')
         stdin, stdout, stderr = ssh.exec_command('/opt/hbase-0.92.0/bin/stop-hbase.sh')
         self.my_logger.debug(str(stdout.readlines()))
-        stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-0.20.205.0/bin/stop-dfs.sh')
+        stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-1.0.1/bin/stop-dfs.sh')
         self.my_logger.debug(str(stdout.readlines()))
-        stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-0.20.205.0/bin/stop-mapred.sh')
+        stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-1.0.1/bin/stop-mapred.sh')
         self.my_logger.debug(str( stdout.readlines()))
         ssh.close()
         
