@@ -19,7 +19,7 @@ class HBase92Cluster(object):
 
     def __init__(self, initial_cluster_id = "default"):
         '''
-        Constructor
+        Constructo
         '''
         ## Necessary variables
         self.cluster = {}
@@ -235,6 +235,7 @@ class HBase92Cluster(object):
             sftp.put( "/tmp/slaves", "/opt/hadoop-1.0.1/conf/slaves")
             os.system("sed -i '/^$/d' /tmp/hbase-site.xml")
             sftp.put( "/tmp/hbase-site.xml", "/opt/hbase-0.92.0/conf/hbase-site.xml")
+            sftp.put( "/tmp/hbase-site.xml", "/opt/hadoop-1.0.1/conf/hbase-site.xml")
             sftp.put( "/tmp/slaves", "/opt/hbase-0.92.0/conf/regionservers")
             sftp.put( "/tmp/hbase-env.sh", "/opt/hbase-0.92.0/conf/hbase-env.sh")
             sftp.put( "/tmp/hadoop-env.sh", "/opt/hadoop-1.0.1/conf/hadoop-env.sh")
