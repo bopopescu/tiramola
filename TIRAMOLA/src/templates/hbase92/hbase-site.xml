@@ -36,7 +36,7 @@
 	</property>
 	<property>
 		<name>hbase.zookeeper.property.dataDir</name>
-		<value>/opt/hbase-0.20.6/zookeeper</value>
+		<value>/opt/hbase-0.92.0/zookeeper</value>
 	</property>
 	<property>
     	<name>hbase.rootdir</name>
