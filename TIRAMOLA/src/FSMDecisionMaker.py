@@ -54,6 +54,9 @@ class FSMDecisionMaker():
         if not allmetrics.has_key('throughput'):
             allmetrics['throughput'] = 0
             
+        if not allmetrics.has_key('qlen'):
+            allmetrics['qlen'] = 0
+            
         if not allmetrics.has_key('latency'):
             allmetrics['latency'] = 0
             
@@ -65,6 +68,7 @@ class FSMDecisionMaker():
         nodes = 0
         for host in allmetrics.values():
             if isinstance(host,dict):
+                ## YCSB aggregation
                 if host.has_key("ycsb_LAMDA_1"):
                     for key in host.keys():
                         if key.startswith('ycsb_LAMDA'):
@@ -75,6 +79,16 @@ class FSMDecisionMaker():
                             allmetrics['latency'] += float(host[key])
                             if host[key] > 0:
                                 clients += 1
+                ## H2RDF aggregation
+                if host.has_key("in_THROUGHPUT"):
+                    for key in host.keys():
+                        if key.startswith('in_real'):
+                            allmetrics['inlambda'] += float(host[key])
+                        if key.startswith('out_real'):
+                            allmetrics['throughput'] += float(host[key])
+                        if key.startswith('qlen'):
+                            allmetrics['qlen'] += float(host[key])
+                ## CPU aggregation
                 for key in host.keys():
                     if key.startswith('cpu_nice') or key.startswith('cpu_wio') or key.startswith('cpu_user') or key.startswith('cpu_system'):
                         allmetrics['cpu'] += float(host[key])
@@ -90,7 +104,7 @@ class FSMDecisionMaker():
         except:
             allmetrics['cpu'] = 0
         
-        self.my_logger.debug( "allmetrics:" + str(allmetrics))
+#        self.my_logger.debug( "allmetrics:" + str(allmetrics))
         
 #        self.my_logger.debug( "trans" + self.utils.trans_cost)
 #        self.my_logger.debug( "gain" + self.utils.gain)
@@ -260,6 +274,8 @@ class PolicyManager(object):
                             if self.utils.cluster_type == "CASSANDRA":
                                 time.sleep(300)
                             if self.utils.cluster_type == "HBASE":
+                                time.sleep(300)
+                            if self.utils.cluster_type == "HBASE92":
                                 time.sleep(300)
                             self.eucacluster.terminate_instances([host.id])
                             break

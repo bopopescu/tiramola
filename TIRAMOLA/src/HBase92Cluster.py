@@ -305,6 +305,12 @@ class HBase92Cluster(object):
         self.my_logger.debug(str(stdout.readlines()))
         stdin, stdout, stderr = ssh.exec_command('/opt/hbase-0.92.0/bin/start-hbase.sh')
         self.my_logger.debug(str(stdout.readlines()))
+        
+        # Manipulation to start H2RDF servers
+        stdin, stdout, stderr = ssh.exec_command('/opt/stopH2RDF.sh')
+        self.my_logger.debug(str(stdout.readlines()))
+        stdin, stdout, stderr = ssh.exec_command('/opt/startH2RDF.sh')
+        self.my_logger.debug(str(stdout.readlines()))
         ssh.close()
             
     def stop_cluster (self):
@@ -313,12 +319,18 @@ class HBase92Cluster(object):
 #        print self.host_template+"master"
 #        print self.cluster[self.host_template+"master"].public_dns_name
         ssh.connect(self.cluster[self.host_template+"master"].public_dns_name, username='root', password='secretpw')
+        
+        # Manipulation to start H2RDF servers
+        stdin, stdout, stderr = ssh.exec_command('/opt/stopH2RDF.sh')
+        self.my_logger.debug(str(stdout.readlines()))
+        
         stdin, stdout, stderr = ssh.exec_command('/opt/hbase-0.92.0/bin/stop-hbase.sh')
         self.my_logger.debug(str(stdout.readlines()))
         stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-1.0.1/bin/stop-dfs.sh')
         self.my_logger.debug(str(stdout.readlines()))
         stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-1.0.1/bin/stop-mapred.sh')
         self.my_logger.debug(str( stdout.readlines()))
+        
         ssh.close()
         
     def add_nodes (self, new_nodes = None):
