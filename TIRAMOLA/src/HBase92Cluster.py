@@ -88,6 +88,8 @@ class HBase92Cluster(object):
         shutil.copy("./templates/hbase92/hbase-site.xml", "/tmp/hbase-site.xml")
         shutil.copy("./templates/hbase92/hbase-env.sh","/tmp/hbase-env.sh")
         shutil.copy("./templates/hbase92/hadoop-env.sh","/tmp/hadoop-env.sh")
+        shutil.copy("./templates/hbase92/hadoop-metrics.properties","/tmp/hadoop-metrics.properties")
+        shutil.copy("./templates/hadoop101/hadoop-metrics2.properties","/tmp/hadoop-metrics2.properties")
         
 #        core_site = open('/tmp/core-site.xml', 'rw')
 #        mapred_site = open('/tmp/mapred-site.xml', 'rw')
@@ -96,6 +98,8 @@ class HBase92Cluster(object):
         core_site = '/tmp/core-site.xml'
         mapred_site = '/tmp/mapred-site.xml'
         hbase_site = '/tmp/hbase-site.xml'
+        hadoop_properties = "/tmp/hadoop-metrics2.properties"
+        hbase_properties = "/tmp/hadoop-metrics.properties"
         
         i = 0
         hosts.write("127.0.0.1\tlocalhost\n")
@@ -137,6 +141,12 @@ class HBase92Cluster(object):
                     print line
                 for line in fileinput.FileInput(mapred_site,inplace=1):
                     line = line.replace("JOBTRACKER_IP",host_template+"master").strip()
+                    print line
+                for line in fileinput.FileInput(hadoop_properties,inplace=1):
+                    line = line.replace("GMETADHOST_IP",host_template+"master").strip()
+                    print line
+                for line in fileinput.FileInput(hbase_properties,inplace=1):
+                    line = line.replace("GMETADHOST_IP",host_template+"master").strip()
                     print line
                 
                 ## create namenode/datanode dirs
@@ -239,6 +249,8 @@ class HBase92Cluster(object):
             sftp.put( "/tmp/slaves", "/opt/hbase-0.92.0/conf/regionservers")
             sftp.put( "/tmp/hbase-env.sh", "/opt/hbase-0.92.0/conf/hbase-env.sh")
             sftp.put( "/tmp/hadoop-env.sh", "/opt/hadoop-1.0.1/conf/hadoop-env.sh")
+            sftp.put( "/tmp/hadoop-metrics2.properties", "/opt/hadoop-1.0.1/conf/hadoop-metrics2.properties")
+            sftp.put( "/tmp/hadoop-metrics.properties", "/opt/hbase-0.92.0/conf/hadoop-metrics.properties")
             sftp.close()
             
             ssh.close()
