@@ -321,6 +321,8 @@ class HBase92Cluster(object):
         # Manipulation to start H2RDF servers
         stdin, stdout, stderr = ssh.exec_command('/opt/stopH2RDF.sh')
         self.my_logger.debug(str(stdout.readlines()))
+        stdin, stdout, stderr = ssh.exec_command('/opt/copyH2RDF.sh')
+        self.my_logger.debug(str(stdout.readlines()))
         stdin, stdout, stderr = ssh.exec_command('/opt/startH2RDF.sh')
         self.my_logger.debug(str(stdout.readlines()))
         ssh.close()
