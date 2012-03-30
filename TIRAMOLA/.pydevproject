@@ -8,7 +8,6 @@
 <path>/TIRAMOLA/src</path>
 </pydev_pathproperty>
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
-<path>/usr/lib/python2.6/dist-packages/euca2ools</path>
-<path>/usr/lib/python2.6/dist-packages</path>
+<path>/usr/lib/python2.7/site-packages</path>
 </pydev_pathproperty>
 </pydev_project>
