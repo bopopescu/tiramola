@@ -281,7 +281,7 @@ class HBaseCluster(object):
             transport.connect(username = 'root', password = 'secretpw')
             transport.open_channel("session", node.public_dns_name, "localhost")
             sftp = paramiko.SFTPClient.from_transport(transport)
-            os.system("sed -i '/^$/d' /tmp/known_hosts")
+            os.system("sed -i '/^$/d' /tmp/known_hosts_"+str(j))
             sftp.put( "/tmp/known_hosts", "/root/.ssh/known_hosts")
             sftp.close()
         

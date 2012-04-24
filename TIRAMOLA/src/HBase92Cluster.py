@@ -266,7 +266,7 @@ class HBase92Cluster(object):
             for fileLine in loop.readlines():
                 known_hosts.write(fileLine.strip())
             loop.close()
-            os.system("sed -i '/^$/d' /tmp/known_hosts")
+            os.system("sed -i '/^$/d' /tmp/known_hosts_"+str(j))
             j = j + 1 
         known_hosts.close()
             
@@ -334,7 +334,7 @@ class HBase92Cluster(object):
 #        print self.cluster[self.host_template+"master"].public_dns_name
         ssh.connect(self.cluster[self.host_template+"master"].public_dns_name, username='root', password='secretpw')
         
-        # Manipulation to start H2RDF servers
+        # Manipulation to stop H2RDF servers
         stdin, stdout, stderr = ssh.exec_command('/opt/stopH2RDF.sh')
         self.my_logger.debug(str(stdout.readlines()))
         

@@ -14,7 +14,7 @@
 	</property>
 	<property>
 		<name>dfs.replication</name>
-		<value>1</value>
+		<value>3</value>
 	</property>
 	<property>
   		<name>dfs.datanode.max.xcievers</name>

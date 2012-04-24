@@ -186,7 +186,7 @@ class CassandraCluster(object):
             for fileLine in loop.readlines():
                 known_hosts.write(fileLine.strip())
             loop.close()
-            os.system("sed -i '/^$/d' /tmp/known_hosts")
+            os.system("sed -i '/^$/d' /tmp/known_hosts_"+str(j))
             j = j + 1 
         known_hosts.close()
             
@@ -201,7 +201,7 @@ class CassandraCluster(object):
             transport.connect(username='root', password='secretpw')
             transport.open_channel("session", str(node.public_dns_name), "localhost")
             sftp = paramiko.SFTPClient.from_transport(transport)
-#            os.system("sed -i '/^$/d' /tmp/known_hosts")
+            os.system("sed -i '/^$/d' /tmp/known_hosts")
             sftp.put("/tmp/known_hosts", "/root/.ssh/known_hosts")
             sftp.close()
         
