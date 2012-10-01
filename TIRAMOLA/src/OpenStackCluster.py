@@ -45,7 +45,7 @@ class OpenStackCluster(object):
         
     def describe_instances(self, state=None, pattern=None):
         instances = []
-        print "init"
+        
         if state != "pollDB":
             # Euca-describe-instances
             describeCmd = describeinstances.DescribeInstances()
@@ -57,7 +57,7 @@ class OpenStackCluster(object):
         "state", "key_name", "ami_launch_index", "product_codes",
         "instance_type", "launch_time", "placement", "kernel",
         "ramdisk")
-
+            print "init"
             for reservation in reservations:
                 for instance in reservation.instances:
                     details = {}
@@ -68,8 +68,10 @@ class OpenStackCluster(object):
                         if hasattr(val, '__iter__'):
                             val = ','.join(val)
                         details[member] = val.strip()
+                    print "init"
                     for var in details.keys():
                         exec "instance.%s=\"%s\"" % (var, details[var])
+                    print "init"
                     if state:
                         if state == instance.state:
                             instances.append(instance)
