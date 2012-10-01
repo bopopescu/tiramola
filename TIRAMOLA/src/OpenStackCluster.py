@@ -40,6 +40,7 @@ class OpenStackCluster(object):
             
         cur.close()
         con.close()
+        print "init"
         
         
     def describe_instances(self, state=None, pattern=None):
