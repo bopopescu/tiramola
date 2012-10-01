@@ -36,6 +36,8 @@ class MyDaemon(Daemon):
             ## cluster object.            
             self.eucacluster, self.nosqlCluster = self.initializeNosqlCluster()
             
+            self.my_logger.debug("Initialized Cluster Connections")
+            
             ## Initialize monitoring for all nodes in the cluster
             self.vmMonitor = MonitorVms.MonitorVms(self.nosqlCluster.cluster)
             
