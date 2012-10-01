@@ -63,7 +63,7 @@ class OpenStackCluster(object):
                         if val is None: val = ""
                         if hasattr(val, '__iter__'):
                             val = ','.join(val)
-                        details[member] = val
+                        details[member] = val.strip()
                     for var in details.keys():
                         exec "instance.%s=\"%s\"" % (var, details[var])
                     if state:
@@ -71,6 +71,7 @@ class OpenStackCluster(object):
                             instances.append(instance)
                     else:
                         instances.append(instance)
+                    print "test"
                         
             ## if simple call
             if not state:
@@ -93,7 +94,7 @@ class OpenStackCluster(object):
             
             for instancefromDB in instancesfromDB:
                 instances.append(self.utils.return_instance_from_tuple(instancefromDB))
-            
+        
         ## if you are using patterns and state, show only matching state and id's
         matched_instances = []
         if pattern:

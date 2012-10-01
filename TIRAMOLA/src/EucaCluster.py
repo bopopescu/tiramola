@@ -62,7 +62,7 @@ class EucaCluster(object):
                         if val is None: val = ""
                         if hasattr(val, '__iter__'):
                             val = ','.join(val)
-                        details[member] = val
+                        details[member] = val.strip()
                     for var in details.keys():
                         exec "instance.%s=\"%s\"" % (var, details[var])
                     if state:
