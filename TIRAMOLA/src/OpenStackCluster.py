@@ -49,9 +49,7 @@ class OpenStackCluster(object):
         if state != "pollDB":
             # Euca-describe-instances
             describeCmd = describeinstances.DescribeInstances()
-            print "init"
             reservations = describeCmd.main()
-            print "init"
             print reservations
             
             members = ("id", "image_id", "public_dns_name", "private_dns_name",
@@ -159,8 +157,6 @@ class OpenStackCluster(object):
         addressing_type="public",
         zone=None): 
         # euca-run-instances
-         # euca-run-instances
-        
         runCmd = runinstances.RunInstances()
         runCmd.Args['image_id'] = image_id
         runCmd.Options['keyname'] = keyname
