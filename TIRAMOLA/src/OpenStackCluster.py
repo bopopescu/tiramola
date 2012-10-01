@@ -47,8 +47,10 @@ class OpenStackCluster(object):
         if state != "pollDB":
             # Euca-describe-instances
             describeCmd = describeinstances.DescribeInstances()
-            reservations= describeCmd.main()
-                
+            reservations = describeCmd.main()
+            
+            print reservations
+            
             members = ("id", "image_id", "public_dns_name", "private_dns_name",
         "state", "key_name", "ami_launch_index", "product_codes",
         "instance_type", "launch_time", "placement", "kernel",
