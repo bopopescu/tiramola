@@ -22,7 +22,7 @@
 # Set environment variables here.
 
 # The java implementation to use.  Required.
-# export JAVA_HOME=/usr/lib/jvm/java-6-sun
+export JAVA_HOME=/opt/jre1.6.0_31
 
 # Where log files are stored.  $HAMA_HOME/logs by default.
 # export HAMA_LOG_DIR=${HAMA_HOME}/logs

@@ -4,13 +4,12 @@ Created on Jun 8, 2010
 @author: vagos
 '''
 
-import paramiko
-import boto.ec2
 from euca2ools.commands.euca import describeimages, describeinstances, runinstances, terminateinstances
 from pysqlite2 import dbapi2 as sqlite
-import sys, os, time
+import sys, time
 import Utils
 import commands
+from boto.ec2.connection import EC2Connection
 
 class OpenStackCluster(object):
     '''
@@ -25,6 +24,7 @@ class OpenStackCluster(object):
         Constructor
         ''' 
         self.utils = Utils.Utils()
+        
 #        Make sure the sqlite file exists. if not, create it and the table we need
         con = sqlite.connect(self.utils.db_file)
         cur = con.cursor()
@@ -49,8 +49,9 @@ class OpenStackCluster(object):
         if state != "pollDB":
             # Euca-describe-instances
             describeCmd = describeinstances.DescribeInstances()
-            reservations = describeCmd.main()
-            print reservations
+            # get the boto connection
+            myconn =  describeCmd.make_connection()
+            reservations =  myconn.get_all_instances();
             
             members = ("id", "image_id", "public_dns_name", "private_dns_name",
         "state", "key_name", "ami_launch_index", "product_codes",
@@ -66,7 +67,7 @@ class OpenStackCluster(object):
                         if val is None: val = ""
                         if hasattr(val, '__iter__'):
                             val = ','.join(val)
-                        details[member] = val.strip()
+                        details[member] = val.partition('\n')[0].strip()
                     for var in details.keys():
                         exec "instance.%s=\"%s\"" % (var, details[var])
                     if state:
@@ -115,7 +116,11 @@ class OpenStackCluster(object):
     def describe_images(self, pattern=None):
         # Euca-describe-images
         describeCmd =  describeimages.DescribeImages()
-        images= describeCmd.main()
+        # get the boto connection
+        myconn =  describeCmd.make_connection()
+        images = myconn.get_all_images()
+        
+        print images
         
         ## if you are using patterns, show only matching names and emi's
         matched_images = []
@@ -131,18 +136,6 @@ class OpenStackCluster(object):
                 return None
         else:
             return images
-        
-    def read_user_data(self, user_data_filename):
-        USER_DATA_CHUNK_SIZE = 512
-        user_data = "";
-        user_data_file = open(user_data_filename, "r")
-        while 1:
-            data = user_data_file.read(USER_DATA_CHUNK_SIZE)
-            if not data:
-                break
-            user_data += data
-        user_data_file.close()
-        return user_data
     
     def run_instances(self, image_id=None,
         keyname=None,
@@ -158,18 +151,17 @@ class OpenStackCluster(object):
         zone=None): 
         # euca-run-instances
         runCmd = runinstances.RunInstances()
-        runCmd.Args['image_id'] = image_id
-        runCmd.Options['keyname'] = keyname
-        runCmd.Options['kernel'] = kernel_id
-        runCmd.Options['ramdisk'] = ramdisk_id
-        runCmd.Options['count'] = max_count
-        runCmd.Options['instance_type'] = instance_type
-        runCmd.Options['group_name'] = group_names
-        runCmd.Options['user_data'] = user_data
-        runCmd.Options['user_data_file'] = user_data_file
-        runCmd.Options['addressing'] = addressing_type
-        runCmd.Options['zone'] = zone
-        reservation = runCmd.main()
+        myconn =  runCmd.make_connection()
+        reservation = myconn.run_instances(image_id=image_id,  
+                                           min_count=min_count,  
+                                           max_count=max_count,
+                                           key_name=keyname,
+                                           security_groups=group_names,
+                                           instance_type=instance_type,
+                                           kernel_id=kernel_id,
+                                           ramdisk_id=ramdisk_id)
+        
+        print reservation
             
 #        print reservation.id
         instances = []
@@ -204,9 +196,9 @@ class OpenStackCluster(object):
         
     def terminate_instances(self, instance_ids):
         terminateCmd = terminateinstances.TerminateInstances()
-        terminateCmd.Args['instance_id'] = instance_ids[0]
-        images = terminateCmd.main()
-        return images
+        myconn =  terminateCmd.make_connection()
+        instances = myconn.terminate_instances(instance_ids)
+        return instances
             
     
 #         

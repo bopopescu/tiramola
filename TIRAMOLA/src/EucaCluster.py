@@ -3,13 +3,14 @@ Created on Jun 8, 2010
 
 @author: vagos
 '''
-
 import paramiko
 import boto.ec2
 from euca2ools.commands.euca import describeimages, describeinstances, runinstances, terminateinstances
 from pysqlite2 import dbapi2 as sqlite
 import sys, os, time
 import Utils
+import commands
+from boto.ec2.connection import EC2Connection
 
 class EucaCluster(object):
     '''
@@ -17,52 +18,55 @@ class EucaCluster(object):
     It can create and stop new instances - and working in conjuction with the
     db specific classes set up various environments. 
     '''
-
-
     def __init__(self):
-#        '''
-#        Constructor
-#        ''' 
+        '''
+        Constructor
+        ''' 
         self.utils = Utils.Utils()
-##        Make sure the sqlite file exists. if not, create it and the table we need
-#        con = sqlite.connect(self.utils.db_file)
-#        cur = con.cursor()
-#        try:
-#            instances = cur.execute('select * from instances'
-#                            ).fetchall()
-#            print """Already discovered instances from previous database file. Use describe_instances without arguments to update.
-#            """
-#            print "Found records:\n", instances
-#        except sqlite.DatabaseError:
-#            cur.execute('create table instances(id text, image_id text, public_dns_name text, private_dns_name text,state text, key_name text, ami_launch_index text, product_codes text,instance_type text, launch_time text, placement text, kernel text, ramdisk text)')
-#            con.commit()
-#            
-#        cur.close()
-#        con.close()
+        
+#        Make sure the sqlite file exists. if not, create it and the table we need
+        con = sqlite.connect(self.utils.db_file)
+        cur = con.cursor()
+        try:
+            instances = cur.execute('select * from instances'
+                            ).fetchall()
+            print """Already discovered instances from previous database file. Use describe_instances without arguments to update.
+            """
+            print "Found records:\n", instances
+        except sqlite.DatabaseError:
+            cur.execute('create table instances(id text, image_id text, public_dns_name text, private_dns_name text,state text, key_name text, ami_launch_index text, product_codes text,instance_type text, launch_time text, placement text, kernel text, ramdisk text)')
+            con.commit()
+            
+        cur.close()
+        con.close()
+        
         
         
     def describe_instances(self, state=None, pattern=None):
         instances = []
+        
         if state != "pollDB":
+            # Euca-describe-instances
             describeCmd = describeinstances.DescribeInstances()
-            reservations= describeCmd.main()
+            # get the boto connection
+            myconn =  describeCmd.make_connection()
+            reservations =  myconn.get_all_instances();
             
             members = ("id", "image_id", "public_dns_name", "private_dns_name",
         "state", "key_name", "ami_launch_index", "product_codes",
         "instance_type", "launch_time", "placement", "kernel",
         "ramdisk")
-
+            
             for reservation in reservations:
                 for instance in reservation.instances:
                     details = {}
                     for member in members:
                         val = getattr(instance, member, "")
-                        print val
                         # product_codes is a list
                         if val is None: val = ""
                         if hasattr(val, '__iter__'):
                             val = ','.join(val)
-                        details[member] = val.strip()
+                        details[member] = val.partition('\n')[0].strip()
                     for var in details.keys():
                         exec "instance.%s=\"%s\"" % (var, details[var])
                     if state:
@@ -92,7 +96,7 @@ class EucaCluster(object):
             
             for instancefromDB in instancesfromDB:
                 instances.append(self.utils.return_instance_from_tuple(instancefromDB))
-            
+        
         ## if you are using patterns and state, show only matching state and id's
         matched_instances = []
         if pattern:
@@ -111,7 +115,11 @@ class EucaCluster(object):
     def describe_images(self, pattern=None):
         # Euca-describe-images
         describeCmd =  describeimages.DescribeImages()
-        images= describeCmd.main()
+        # get the boto connection
+        myconn =  describeCmd.make_connection()
+        images = myconn.get_all_images()
+        
+        print images
         
         ## if you are using patterns, show only matching names and emi's
         matched_images = []
@@ -147,26 +155,24 @@ class EucaCluster(object):
         min_count=1,
         max_count=1,
         instance_type='m1.small',
-        group_names=None,
+        group_names=[],
         user_data=None,
         user_data_file=None,
         addressing_type="public",
         zone=None): 
         # euca-run-instances
-        
         runCmd = runinstances.RunInstances()
-        runCmd.Args['image_id'] = image_id
-        runCmd.Options['keyname'] = keyname
-        runCmd.Options['kernel'] = kernel_id
-        runCmd.Options['ramdisk'] = ramdisk_id
-        runCmd.Options['count'] = max_count
-        runCmd.Options['instance_type'] = instance_type
-        runCmd.Options['group_name'] = group_names
-        runCmd.Options['user_data'] = user_data
-        runCmd.Options['user_data_file'] = user_data_file
-        runCmd.Options['addressing'] = addressing_type
-        runCmd.Options['zone'] = zone
-        reservation = runCmd.main()
+        myconn =  runCmd.make_connection()
+        reservation = myconn.run_instances(image_id=image_id,  
+                                           min_count=min_count,  
+                                           max_count=max_count,
+                                           key_name=keyname,
+                                           security_groups=group_names,
+                                           instance_type=instance_type,
+                                           kernel_id=kernel_id,
+                                           ramdisk_id=ramdisk_id)
+        
+        print reservation
             
 #        print reservation.id
         instances = []
@@ -201,10 +207,11 @@ class EucaCluster(object):
         
     def terminate_instances(self, instance_ids):
         terminateCmd = terminateinstances.TerminateInstances()
-        terminateCmd.Args['instance_id'] = instance_ids[0]
-        images = terminateCmd.main()
-        return images
-            
+        myconn =  terminateCmd.make_connection()
+        instances = myconn.terminate_instances(instance_ids)
+        return instances
+        
+
     
 #         
 ## Utilities
