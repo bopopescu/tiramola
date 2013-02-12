@@ -151,6 +151,7 @@ class HBase92Cluster(object):
                 
                 ## create namenode/datanode dirs
                 stdin, stdout, stderr = ssh.exec_command('mkdir /opt/hdfsnames/')
+                stdin, stdout, stderr = ssh.exec_command('mkdir /opt/hadooptmp/')
                 
                 # Add node to cluster
                 self.cluster[host_template+"master"] = node
@@ -168,6 +169,7 @@ class HBase92Cluster(object):
                 
                 ## create namenode/datanode dirs
                 stdin, stdout, stderr = ssh.exec_command('mkdir /opt/hdfsdata/')
+                stdin, stdout, stderr = ssh.exec_command('mkdir /opt/hadooptmp/')
                 
                 # Add node to cluster
                 self.cluster[host_template+ str(i)] = node

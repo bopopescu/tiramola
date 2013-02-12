@@ -8,4 +8,8 @@
 		<name>fs.default.name</name>
 		<value>hdfs://NAMENODE_IP:9000</value>
 	</property>
+	<property>
+		<name>hadoop.tmp.dir</name>
+		<value>/opt/hadooptmp/</value>
+	</property>
 </configuration>
