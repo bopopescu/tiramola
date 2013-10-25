@@ -49,16 +49,8 @@ class GenAlgDecisionMaker():
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
         handler.setFormatter(formatter)
         self.my_logger.addHandler(handler)
-        
     
-    def takeDecision(self, rcvallmetrics):
-        '''
-         this method reads allmetrics object created by MonitorVms and decides to change the number of participating
-         virtual nodes.
-        '''
-        # # Take decision based on metrics
-        action = "none"
-        
+    def aggregateMetrics(self, rcvallmetrics):    
         allmetrics = rcvallmetrics.copy()
         self.my_logger.debug("state" + str(self.currentState))
         if not allmetrics.has_key('inlambda'):
@@ -116,11 +108,26 @@ class GenAlgDecisionMaker():
             allmetrics['cpu'] = allmetrics['cpu'] / nodes
         except:
             allmetrics['cpu'] = 0
+            
+        return allmetrics
         
-#        self.my_logger.debug( "allmetrics:" + str(allmetrics))
+    def visualize(self, stategraph):
+        vis = fuzz.visualization.VisManager.create_backend(stategraph)
+        (vis_format, data) = vis.visualize()
         
-#        self.my_logger.debug( "trans" + self.utils.trans_cost)
-#        self.my_logger.debug( "gain" + self.utils.gain)
+        with open("%s.%s" % ("states", vis_format), "wb") as fp:
+            fp.write(data)
+            fp.flush()
+            fp.close()
+    
+    def takeDecision(self, rcvallmetrics):
+        '''
+         this method reads allmetrics object created by MonitorVms and decides to change the number of participating
+         virtual nodes.
+        '''
+        action = "none"
+        allmetrics = self.aggregateMetrics(rcvallmetrics)
+        
         states = fuzz.fset.FuzzySet()
         # # Make all available states and connect with default weights
         for i in range(int(self.utils.initial_cluster_size), int(self.utils.max_cluster_size) + 1):
@@ -132,8 +139,6 @@ class GenAlgDecisionMaker():
 
         for i in states.keys():
             v.append(i)
-            # # Add rebalancing states
-#            v.append(i+"_reb")
             
         v = set(v)
         
@@ -141,30 +146,18 @@ class GenAlgDecisionMaker():
         
         # # Correctly connect the states (basically all transitions are possible)
         for i in states.keys():
-#            self.my_logger.debug( "i" + str(i))
-#            self.my_logger.debug( "start" + str(max(int(i)-int(self.utils.rem_nodes),int(self.utils.initial_cluster_size))))
-#            self.my_logger.debug( "end" + str(min(int(i)+int(self.utils.add_nodes), int(self.utils.max_cluster_size))))
             for j in range(max(int(i) - int(self.utils.rem_nodes), int(self.utils.initial_cluster_size)), min(int(i) + int(self.utils.add_nodes), int(self.utils.max_cluster_size)) + 1):
                 
                 if i != str(j):
                     allmetrics['max_throughput'] = float(i) * float(self.utils.serv_throughput)
                     allmetrics['num_nodes'] = int(i)
                     allmetrics['added_nodes'] = int(i) - j
+                    # Vertices are weighted using the trans cost as defined by the user
                     stategraph.connect(str(j), i, eval(self.utils.trans_cost, allmetrics))
                     
-#                if i == "11":
-#                    self.my_logger.debug( "11edges" + str(stategraph.edges(head=i)))
-        
-#        vis = fuzz.visualization.VisManager.create_backend(stategraph)
-#        (vis_format, data) = vis.visualize()
-#        
-#        with open("%s.%s" % ("states", vis_format), "wb") as fp:
-#            fp.write(data)
-#            fp.flush()
-#            fp.close()
+#         self.visualize(stategraph)
          
         for transition in stategraph.edges(head=self.currentState):
-#            if transition[0] == '10':
             self.my_logger.debug("next: " + str(transition[0]) + " curr: " + str(transition[1]))
             self.my_logger.debug("next gain: " + str(states.mu(transition[0]) * 3600))
             self.my_logger.debug("next cost: " + str(states.mu(transition[0]) * 3600 - stategraph.mu(transition[0], transition[1]) * 500))
