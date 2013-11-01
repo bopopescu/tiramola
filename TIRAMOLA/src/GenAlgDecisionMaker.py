@@ -6,6 +6,7 @@ Created on Jun 23, 2011
 
 import fuzz, logging, math, time, thread
 import Utils
+import deap
 
 class GenAlgDecisionMaker():
     
@@ -128,6 +129,8 @@ class GenAlgDecisionMaker():
         action = "none"
         allmetrics = self.aggregateMetrics(rcvallmetrics)
         
+        
+        
         states = fuzz.fset.FuzzySet()
         # # Make all available states and connect with default weights
         for i in range(int(self.utils.initial_cluster_size), int(self.utils.max_cluster_size) + 1):
@@ -211,7 +214,7 @@ class GenAlgDecisionMaker():
             values = {'latency':latency, 'cpu':cpu, 'inlambda':inlambda}
             self.my_logger.debug("state: " + str(self.currentState) + " values:" + str(values))
             self.takeDecision(values)
-            time.sleep(1)
+#             time.sleep(1)
         return
     
 class PolicyManager(object):
