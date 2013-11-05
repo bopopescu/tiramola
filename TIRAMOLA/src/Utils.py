@@ -9,7 +9,7 @@ import re
 #import boto
 import boto.ec2
 #from euca2ools import Euca2ool, InstanceValidationError, ConnectionFailed, FileValidationError
-from pysqlite2 import dbapi2 as sqlite
+from sqlite3 import dbapi2 as sqlite
 #import sys, os
 import os
 from ConfigParser import ConfigParser

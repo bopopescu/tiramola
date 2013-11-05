@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 '''
 Created on Jun 23, 2011
 
@@ -6,7 +7,8 @@ Created on Jun 23, 2011
 
 import fuzz, logging, math, time, thread
 import Utils
-import deap
+import matplotlib.pyplot as plt
+import random
 
 class GenAlgDecisionMaker():
     
@@ -27,6 +29,7 @@ class GenAlgDecisionMaker():
             self.currentState = str(cluster_size)
             self.nextState = str(cluster_size)
             
+        # initialize for actual run
         else:
             self.utils = Utils.Utils()
             self.eucacluster = eucacluster
@@ -121,15 +124,34 @@ class GenAlgDecisionMaker():
             fp.flush()
             fp.close()
     
-    def takeDecision(self, rcvallmetrics):
+    def act(self,action):
+        self.my_logger.debug('action: ' + action)
+            
+        self.my_logger.debug("Taking decision with acted: " + str(self.acted))
+        if self.acted[len(self.acted) - 1] == "done" :
+            # Check if we are not in simulation mode
+            if (self.polManager != None) :
+                    # start the action as a thread
+                    thread.start_new_thread(self.polManager.act, (action, self.acted, self.currentState, self.nextState))
+            self.my_logger.debug("Action undertaken: " + str(action))
+            if not self.refreshMonitor.startswith("refreshed"):
+                self.VmMonitor.configure_monitoring()
+                self.refreshMonitor = "refreshed"
+            self.currentState = self.nextState
+        else: 
+            # # Action still takes place so do nothing
+            self.my_logger.debug("Waiting for action to finish: " + str(action) + str(self.acted))
+            self.refreshMonitor = "not refreshed"
+            
+        return 'none'
+    
+    def takeDecisionOld(self, rcvallmetrics):
         '''
          this method reads allmetrics object created by MonitorVms and decides to change the number of participating
          virtual nodes.
         '''
         action = "none"
         allmetrics = self.aggregateMetrics(rcvallmetrics)
-        
-        
         
         states = fuzz.fset.FuzzySet()
         # # Make all available states and connect with default weights
@@ -157,7 +179,8 @@ class GenAlgDecisionMaker():
                     allmetrics['added_nodes'] = int(i) - j
                     # Vertices are weighted using the trans cost as defined by the user
                     stategraph.connect(str(j), i, eval(self.utils.trans_cost, allmetrics))
-                    
+
+# Visualize the state graph
 #         self.visualize(stategraph)
          
         for transition in stategraph.edges(head=self.currentState):
@@ -183,38 +206,135 @@ class GenAlgDecisionMaker():
         elif int(self.nextState) < int(self.currentState):
             action = "remove"
         
-        self.my_logger.debug('action: ' + action)
-            
-        self.my_logger.debug("Taking decision with acted: " + str(self.acted))
-        if self.acted[len(self.acted) - 1] == "done" :
-            # Check if we are not in simulation mode
-            if (self.polManager != None) :
-                    # start the action as a thread
-                    thread.start_new_thread(self.polManager.act, (action, self.acted, self.currentState, self.nextState))
-            self.my_logger.debug("Action undertaken: " + str(action))
-            if not self.refreshMonitor.startswith("refreshed"):
-                self.VmMonitor.configure_monitoring()
-                self.refreshMonitor = "refreshed"
-            self.currentState = self.nextState
-        else: 
-            # # Action still takes place so do nothing
-            self.my_logger.debug("Waiting for action to finish: " + str(action) + str(self.acted))
-            self.refreshMonitor = "not refreshed"
+        # Start a new thread to act
+        action = self.act(action)
         
+        return True
+    
+    def takeDecision(self, rcvallmetrics):
+        '''
+         this method reads allmetrics object created by MonitorVms and decides to change the number of participating
+         virtual nodes.
+        '''
         action = "none"
+        allmetrics = self.aggregateMetrics(rcvallmetrics)
+        
+        states = fuzz.fset.FuzzySet()
+        # # Make all available states and connect with default weights
+        for i in range(int(self.utils.initial_cluster_size), int(self.utils.max_cluster_size) + 1):
+            allmetrics['max_throughput'] = float(i) * float(self.utils.serv_throughput)
+            allmetrics['num_nodes'] = int(i)
+            states.add(fuzz.fset.FuzzyElement(str(i), eval(self.utils.gain, allmetrics)))
+        
+        v = []
+
+        for i in states.keys():
+            v.append(i)
+            
+        v = set(v)
+        
+        stategraph = fuzz.fgraph.FuzzyGraph(viter=v, directed=True)
+        
+        # # Correctly connect the states (basically all transitions are possible)
+        for i in states.keys():
+            for j in range(max(int(i) - int(self.utils.rem_nodes), int(self.utils.initial_cluster_size)), min(int(i) + int(self.utils.add_nodes), int(self.utils.max_cluster_size)) + 1):
+                
+                if i != str(j):
+                    allmetrics['max_throughput'] = float(i) * float(self.utils.serv_throughput)
+                    allmetrics['num_nodes'] = int(i)
+                    allmetrics['added_nodes'] = int(i) - j
+                    # Vertices are weighted using the trans cost as defined by the user
+                    stategraph.connect(str(j), i, eval(self.utils.trans_cost, allmetrics))
+
+# Visualize the state graph
+#         self.visualize(stategraph)
+         
+        for transition in stategraph.edges(head=self.currentState):
+            self.my_logger.debug("next: " + str(transition[0]) + " curr: " + str(transition[1]))
+            self.my_logger.debug("next gain: " + str(states.mu(transition[0]) * 3600))
+            self.my_logger.debug("next cost: " + str(states.mu(transition[0]) * 3600 - stategraph.mu(transition[0], transition[1]) * 500))
+            self.my_logger.debug("curr gain: " + str(states.mu(transition[1]) * 3600))
+                
+            if (states.mu(transition[0]) * 3600 - stategraph.mu(transition[0], transition[1]) * 500) > (states.mu(transition[1]) * 3600):
+                if self.nextState == self.currentState:
+                    # # if it's the first transition that works
+                    self.nextState = transition[0]
+                else:
+                    # # if there are different competing transitions evaluate the one with the biggest gain
+                    if (states.mu(transition[0]) * 3600 - stategraph.mu(transition[0], transition[1]) * 500) > (states.mu(self.nextState) * 3600 - stategraph.mu(self.nextState, self.currentState) * 500):
+                        self.nextState = transition[0]
+
+        if self.nextState != self.currentState:
+            self.my_logger.debug("to_next: " + str(self.nextState) + " from_curr: " + str(self.currentState))
+            
+        if int(self.nextState) > int(self.currentState):
+            action = "add"
+        elif int(self.nextState) < int(self.currentState):
+            action = "remove"
+        
+        # Start a new thread to act
+        action = self.act(action)
         
         return True
     
     def simulate(self):
         # # creates a sin load simulated for an hour
-        for i in range(0, 3600, 30):
+        x, platency, pcpu, pinlambda, pstates = [], [], [], [], []
+        
+        for i in range(0, 7200, 30):
             latency = max(0.020, 20 * abs(math.sin(0.05 * math.radians(i))) - int(self.currentState))
             cpu = max(5, 60 * abs(math.sin(0.05 * math.radians(i))) - int(self.currentState))
             inlambda = max(10000, 200000 * abs(math.sin(0.05 * math.radians(i))))
             values = {'latency':latency, 'cpu':cpu, 'inlambda':inlambda}
             self.my_logger.debug("state: " + str(self.currentState) + " values:" + str(values))
             self.takeDecision(values)
+            x.append(i) 
+            platency.append(latency)
+            pcpu.append(cpu)
+            pinlambda.append(inlambda)
+            pstates.append(self.currentState)
 #             time.sleep(1)
+        for i in range(7200, 2 * 7200, 30):
+            latency = max(0.020, 20 * abs(math.sin(0.05 * math.radians(i))) - int(self.currentState))
+            cpu = max(5, 50 * abs(math.sin(0.05 * math.radians(i))) - int(self.currentState))
+            inlambda = max(10000, 100000 * abs(math.sin(0.05 * math.radians(i))))
+            values = {'latency':latency, 'cpu':cpu, 'inlambda':inlambda}
+            self.my_logger.debug("state: " + str(self.currentState) + " values:" + str(values))
+            self.takeDecision(values)
+            x.append(i)
+            platency.append(latency)
+            pcpu.append(cpu)
+            pinlambda.append(inlambda)
+            pstates.append(self.currentState)
+
+        plt.figure(figsize=(15, 10))
+        plt.subplot(2, 2, 1)    
+        plt.xlabel('Time')
+        plt.ylabel('lambda (req/s) as measured client side')
+        plt.title('lambda variation')
+        plt.plot(x, pinlambda, "-b")
+        
+        plt.subplot(2, 2, 2)
+        plt.xlabel('Time')
+        plt.ylabel('latency (s)')
+        plt.title('Average client latency')
+        plt.plot(x, platency, "-r")
+        
+        plt.subplot(2, 2, 3)
+        plt.xlabel('Time')
+        plt.ylabel('Avg CPU load (%)')
+        plt.title('Average cluster node CPU load')
+        plt.plot(x, pcpu, "-g")
+        
+        
+        plt.subplot(2, 2, 4)
+        plt.xlabel('Time')
+        plt.ylabel('Number of nodes (#)')
+        plt.title('Nodes comprising the cluster - State')
+        plt.plot(x, pstates, "-r")
+        
+        plt.savefig('/home/vagos/lambda.png', dpi=600)
+#         plt.show()
         return
     
 class PolicyManager(object):
