@@ -1,0 +1,254 @@
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+RefactoringTool: Skipping implicit fixer: buffer
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+RefactoringTool: Skipping implicit fixer: idioms
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+RefactoringTool: Skipping implicit fixer: set_literal
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+RefactoringTool: Skipping implicit fixer: ws_comma
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+root: Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+RefactoringTool: Refactored ./bundler.py
+RefactoringTool: Refactored ./image.py
+RefactoringTool: Refactored ./metadata.py
+RefactoringTool: Refactored ./utils.py
+RefactoringTool: Refactored ./commands/eucacommand.py
+RefactoringTool: Refactored ./commands/euare/addgrouppolicy.py
+RefactoringTool: Refactored ./commands/euare/adduserpolicy.py
+RefactoringTool: Refactored ./commands/euare/createaccesskey.py
+RefactoringTool: Refactored ./commands/euare/createaccount.py
+RefactoringTool: Refactored ./commands/euare/creategroup.py
+RefactoringTool: Refactored ./commands/euare/createsigningcertificate.py
+RefactoringTool: Refactored ./commands/euare/createuser.py
+RefactoringTool: Refactored ./commands/euare/deletegroup.py
+RefactoringTool: Refactored ./commands/euare/deleteuser.py
+RefactoringTool: Refactored ./commands/euare/getaccountpolicy.py
+RefactoringTool: Refactored ./commands/euare/getaccountsummary.py
+RefactoringTool: Refactored ./commands/euare/getgroup.py
+RefactoringTool: Refactored ./commands/euare/getgrouppolicy.py
+RefactoringTool: Refactored ./commands/euare/getldapsyncstatus.py
+RefactoringTool: Refactored ./commands/euare/getloginprofile.py
+RefactoringTool: Refactored ./commands/euare/getuser.py
+RefactoringTool: Refactored ./commands/euare/getuserinfo.py
+RefactoringTool: Refactored ./commands/euare/getuserpolicy.py
+RefactoringTool: Refactored ./commands/euare/listaccesskeys.py
+RefactoringTool: Refactored ./commands/euare/listaccountaliases.py
+RefactoringTool: Refactored ./commands/euare/listaccountpolicies.py
+RefactoringTool: Refactored ./commands/euare/listaccounts.py
+RefactoringTool: Refactored ./commands/euare/listgrouppolicies.py
+RefactoringTool: Refactored ./commands/euare/listgroups.py
+RefactoringTool: Refactored ./commands/euare/listgroupsforuser.py
+RefactoringTool: Refactored ./commands/euare/listmfadevices.py
+RefactoringTool: Refactored ./commands/euare/listsigningcertificates.py
+RefactoringTool: Refactored ./commands/euare/listuserpolicies.py
+RefactoringTool: Refactored ./commands/euare/listusers.py
+RefactoringTool: Refactored ./commands/euare/templaterequest.py
+RefactoringTool: Refactored ./commands/euare/uploadsigningcertificate.py
+RefactoringTool: Refactored ./commands/euca/allocateaddress.py
+RefactoringTool: Refactored ./commands/euca/associateaddress.py
+RefactoringTool: Refactored ./commands/euca/attachvolume.py
+RefactoringTool: Refactored ./commands/euca/authorize.py
+RefactoringTool: No changes to ./commands/euca/bundleimage.py
+RefactoringTool: Refactored ./commands/euca/bundleinstance.py
+RefactoringTool: Refactored ./commands/euca/bundleupload.py
+RefactoringTool: Refactored ./commands/euca/bundlevol.py
+RefactoringTool: Refactored ./commands/euca/cancelbundletask.py
+RefactoringTool: Refactored ./commands/euca/checkbucket.py
+RefactoringTool: Refactored ./commands/euca/confirmproductinstance.py
+RefactoringTool: Refactored ./commands/euca/createimage.py
+RefactoringTool: Refactored ./commands/euca/createkeypair.py
+RefactoringTool: Refactored ./commands/euca/createsecuritygroup.py
+RefactoringTool: Refactored ./commands/euca/createsnapshot.py
+RefactoringTool: Refactored ./commands/euca/createtags.py
+RefactoringTool: Refactored ./commands/euca/createvolume.py
+RefactoringTool: Refactored ./commands/euca/deletebundle.py
+RefactoringTool: Refactored ./commands/euca/deletegroup.py
+RefactoringTool: Refactored ./commands/euca/deletekeypair.py
+RefactoringTool: Refactored ./commands/euca/deletesnapshot.py
+RefactoringTool: No changes to ./commands/euca/deletetags.py
+RefactoringTool: Refactored ./commands/euca/deletevolume.py
+RefactoringTool: Refactored ./commands/euca/deregister.py
+RefactoringTool: Refactored ./commands/euca/describeaddresses.py
+RefactoringTool: Refactored ./commands/euca/describeavailabilityzones.py
+RefactoringTool: Refactored ./commands/euca/describebundletasks.py
+RefactoringTool: Refactored ./commands/euca/describegroups.py
+RefactoringTool: Refactored ./commands/euca/describeimageattribute.py
+RefactoringTool: Refactored ./commands/euca/describeimages.py
+RefactoringTool: Refactored ./commands/euca/describeinstances.py
+RefactoringTool: Refactored ./commands/euca/describekeypairs.py
+RefactoringTool: Refactored ./commands/euca/describeregions.py
+RefactoringTool: Refactored ./commands/euca/describesnapshots.py
+RefactoringTool: Refactored ./commands/euca/describetags.py
+RefactoringTool: Refactored ./commands/euca/describevolumes.py
+RefactoringTool: Refactored ./commands/euca/detachvolume.py
+RefactoringTool: Refactored ./commands/euca/disassociateaddress.py
+RefactoringTool: Refactored ./commands/euca/downloadbundle.py
+RefactoringTool: Refactored ./commands/euca/getconsoleoutput.py
+RefactoringTool: Refactored ./commands/euca/getpassword.py
+RefactoringTool: Refactored ./commands/euca/getpassworddata.py
+RefactoringTool: Refactored ./commands/euca/importkeypair.py
+RefactoringTool: Refactored ./commands/euca/modifyimageattribute.py
+RefactoringTool: Refactored ./commands/euca/monitorinstances.py
+RefactoringTool: Refactored ./commands/euca/register.py
+RefactoringTool: Refactored ./commands/euca/releaseaddress.py
+RefactoringTool: Refactored ./commands/euca/resetimageattribute.py
+RefactoringTool: Refactored ./commands/euca/revoke.py
+RefactoringTool: Refactored ./commands/euca/runinstances.py
+RefactoringTool: Refactored ./commands/euca/startinstances.py
+RefactoringTool: Refactored ./commands/euca/stopinstances.py
+RefactoringTool: Refactored ./commands/euca/terminateinstances.py
+RefactoringTool: Refactored ./commands/euca/unbundle.py
+RefactoringTool: Refactored ./commands/euca/unmonitorinstances.py
+RefactoringTool: Refactored ./commands/euca/uploadbundle.py
+RefactoringTool: Refactored ./commands/eustore/__init__.py
+RefactoringTool: Refactored ./commands/eustore/describeimages.py
+RefactoringTool: Refactored ./commands/eustore/installimage.py
+RefactoringTool: Refactored ./nc/auth.py
+RefactoringTool: Refactored ./nc/connection.py
+RefactoringTool: Files that were modified:
+RefactoringTool: ./bundler.py
+RefactoringTool: ./image.py
+RefactoringTool: ./metadata.py
+RefactoringTool: ./utils.py
+RefactoringTool: ./commands/eucacommand.py
+RefactoringTool: ./commands/euare/addgrouppolicy.py
+RefactoringTool: ./commands/euare/adduserpolicy.py
+RefactoringTool: ./commands/euare/createaccesskey.py
+RefactoringTool: ./commands/euare/createaccount.py
+RefactoringTool: ./commands/euare/creategroup.py
+RefactoringTool: ./commands/euare/createsigningcertificate.py
+RefactoringTool: ./commands/euare/createuser.py
+RefactoringTool: ./commands/euare/deletegroup.py
+RefactoringTool: ./commands/euare/deleteuser.py
+RefactoringTool: ./commands/euare/getaccountpolicy.py
+RefactoringTool: ./commands/euare/getaccountsummary.py
+RefactoringTool: ./commands/euare/getgroup.py
+RefactoringTool: ./commands/euare/getgrouppolicy.py
+RefactoringTool: ./commands/euare/getldapsyncstatus.py
+RefactoringTool: ./commands/euare/getloginprofile.py
+RefactoringTool: ./commands/euare/getuser.py
+RefactoringTool: ./commands/euare/getuserinfo.py
+RefactoringTool: ./commands/euare/getuserpolicy.py
+RefactoringTool: ./commands/euare/listaccesskeys.py
+RefactoringTool: ./commands/euare/listaccountaliases.py
+RefactoringTool: ./commands/euare/listaccountpolicies.py
+RefactoringTool: ./commands/euare/listaccounts.py
+RefactoringTool: ./commands/euare/listgrouppolicies.py
+RefactoringTool: ./commands/euare/listgroups.py
+RefactoringTool: ./commands/euare/listgroupsforuser.py
+RefactoringTool: ./commands/euare/listmfadevices.py
+RefactoringTool: ./commands/euare/listsigningcertificates.py
+RefactoringTool: ./commands/euare/listuserpolicies.py
+RefactoringTool: ./commands/euare/listusers.py
+RefactoringTool: ./commands/euare/templaterequest.py
+RefactoringTool: ./commands/euare/uploadsigningcertificate.py
+RefactoringTool: ./commands/euca/allocateaddress.py
+RefactoringTool: ./commands/euca/associateaddress.py
+RefactoringTool: ./commands/euca/attachvolume.py
+RefactoringTool: ./commands/euca/authorize.py
+RefactoringTool: ./commands/euca/bundleimage.py
+RefactoringTool: ./commands/euca/bundleinstance.py
+RefactoringTool: ./commands/euca/bundleupload.py
+RefactoringTool: ./commands/euca/bundlevol.py
+RefactoringTool: ./commands/euca/cancelbundletask.py
+RefactoringTool: ./commands/euca/checkbucket.py
+RefactoringTool: ./commands/euca/confirmproductinstance.py
+RefactoringTool: ./commands/euca/createimage.py
+RefactoringTool: ./commands/euca/createkeypair.py
+RefactoringTool: ./commands/euca/createsecuritygroup.py
+RefactoringTool: ./commands/euca/createsnapshot.py
+RefactoringTool: ./commands/euca/createtags.py
+RefactoringTool: ./commands/euca/createvolume.py
+RefactoringTool: ./commands/euca/deletebundle.py
+RefactoringTool: ./commands/euca/deletegroup.py
+RefactoringTool: ./commands/euca/deletekeypair.py
+RefactoringTool: ./commands/euca/deletesnapshot.py
+RefactoringTool: ./commands/euca/deletetags.py
+RefactoringTool: ./commands/euca/deletevolume.py
+RefactoringTool: ./commands/euca/deregister.py
+RefactoringTool: ./commands/euca/describeaddresses.py
+RefactoringTool: ./commands/euca/describeavailabilityzones.py
+RefactoringTool: ./commands/euca/describebundletasks.py
+RefactoringTool: ./commands/euca/describegroups.py
+RefactoringTool: ./commands/euca/describeimageattribute.py
+RefactoringTool: ./commands/euca/describeimages.py
+RefactoringTool: ./commands/euca/describeinstances.py
+RefactoringTool: ./commands/euca/describekeypairs.py
+RefactoringTool: ./commands/euca/describeregions.py
+RefactoringTool: ./commands/euca/describesnapshots.py
+RefactoringTool: ./commands/euca/describetags.py
+RefactoringTool: ./commands/euca/describevolumes.py
+RefactoringTool: ./commands/euca/detachvolume.py
+RefactoringTool: ./commands/euca/disassociateaddress.py
+RefactoringTool: ./commands/euca/downloadbundle.py
+RefactoringTool: ./commands/euca/getconsoleoutput.py
+RefactoringTool: ./commands/euca/getpassword.py
+RefactoringTool: ./commands/euca/getpassworddata.py
+RefactoringTool: ./commands/euca/importkeypair.py
+RefactoringTool: ./commands/euca/modifyimageattribute.py
+RefactoringTool: ./commands/euca/monitorinstances.py
+RefactoringTool: ./commands/euca/register.py
+RefactoringTool: ./commands/euca/releaseaddress.py
+RefactoringTool: ./commands/euca/resetimageattribute.py
+RefactoringTool: ./commands/euca/revoke.py
+RefactoringTool: ./commands/euca/runinstances.py
+RefactoringTool: ./commands/euca/startinstances.py
+RefactoringTool: ./commands/euca/stopinstances.py
+RefactoringTool: ./commands/euca/terminateinstances.py
+RefactoringTool: ./commands/euca/unbundle.py
+RefactoringTool: ./commands/euca/unmonitorinstances.py
+RefactoringTool: ./commands/euca/uploadbundle.py
+RefactoringTool: ./commands/eustore/__init__.py
+RefactoringTool: ./commands/eustore/describeimages.py
+RefactoringTool: ./commands/eustore/installimage.py
+RefactoringTool: ./nc/auth.py
+RefactoringTool: ./nc/connection.py

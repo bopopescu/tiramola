@@ -1,0 +1,60 @@
+2014-11-18 17:24:46,102 - DEBUG - GenAlgDecisionMaker - 3 individual: [[0.026381520970546246, 0.9464378421078541]]
+2014-11-18 17:24:46,102 - DEBUG - GenAlgDecisionMaker - state: 4 values:{'cpu': 5, 'latency': 0.02, 'max_throughput': 14000.0, 'num_nodes': 4, 'inlambda': 10000}
+2014-11-18 17:24:46,102 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 3
+2014-11-18 17:24:49,203 - DEBUG - GenAlgDecisionMaker - state4
+2014-11-18 17:36:26,895 - DEBUG - GenAlgDecisionMaker - 3 individual: [[0.5197779418935203, 0.27332168656972367]]
+2014-11-18 17:36:26,895 - DEBUG - GenAlgDecisionMaker - state: 4 values:{'num_nodes': 4, 'latency': 0.02, 'inlambda': 10000, 'cpu': 5, 'max_throughput': 14000.0}
+2014-11-18 17:36:26,895 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 3
+2014-11-18 17:36:29,979 - DEBUG - GenAlgDecisionMaker - state4
+2014-11-18 17:37:54,182 - DEBUG - GenAlgDecisionMaker - 3 individual: [[0.6455184029093541, 0.8536416301845956]]
+2014-11-18 17:37:54,182 - DEBUG - GenAlgDecisionMaker - state: 4 values:{'num_nodes': 4, 'latency': 0.02, 'cpu': 5, 'max_throughput': 14000.0, 'inlambda': 10000}
+2014-11-18 17:37:54,182 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 3
+2014-11-18 17:37:57,166 - DEBUG - GenAlgDecisionMaker - state4
+2014-11-18 17:39:10,919 - DEBUG - GenAlgDecisionMaker - 3 individual: [[0.24648195966935815, 0.5812899303907797]]
+2014-11-18 17:39:10,923 - DEBUG - GenAlgDecisionMaker - 4 individual: [[0.775603702491676, 0.09844208494469919]]
+2014-11-18 17:39:10,926 - DEBUG - GenAlgDecisionMaker - 5 individual: [[0.27470482084978365, 0.5626731265834566]]
+2014-11-18 17:39:10,930 - DEBUG - GenAlgDecisionMaker - 6 individual: [[0.6173902495634049, 0.5174367681215164]]
+2014-11-18 17:39:10,933 - DEBUG - GenAlgDecisionMaker - 7 individual: [[0.6314052559425951, 0.5844779686518263]]
+2014-11-18 17:39:10,936 - DEBUG - GenAlgDecisionMaker - 8 individual: [[0.5428775183965951, 0.5394557645033612]]
+2014-11-18 17:39:10,937 - DEBUG - GenAlgDecisionMaker - state: 4 values:{'cpu': 5, 'num_nodes': 4, 'latency': 0.02, 'max_throughput': 14000.0, 'inlambda': 10000}
+2014-11-18 17:39:10,937 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 3
+2014-11-18 17:39:10,938 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 4
+2014-11-18 17:39:10,940 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 5
+2014-11-18 17:39:10,942 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 6
+2014-11-18 17:39:10,944 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 7
+2014-11-18 17:39:10,947 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 8
+2014-11-18 17:39:19,581 - DEBUG - GenAlgDecisionMaker - state4
+2014-11-18 17:39:19,595 - DEBUG - GenAlgDecisionMaker - Updating HoF for: 9
+2014-11-18 17:39:19,605 - DEBUG - GenAlgDecisionMaker - Updating HoF for: 10
+2014-11-18 17:39:19,612 - DEBUG - GenAlgDecisionMaker - Updating HoF for: 11
+2014-11-18 17:39:19,620 - DEBUG - GenAlgDecisionMaker - Updating HoF for: 12
+2014-11-18 17:39:19,627 - DEBUG - GenAlgDecisionMaker - next: 7 curr: 4
+2014-11-18 17:39:19,628 - DEBUG - GenAlgDecisionMaker - next gain: 0.0001583834152549204
+2014-11-18 17:39:19,628 - DEBUG - GenAlgDecisionMaker - next cost: -0.9998416165847451
+2014-11-18 17:39:19,628 - DEBUG - GenAlgDecisionMaker - curr gain: 0.00012893614917122159
+2014-11-18 17:39:19,628 - DEBUG - GenAlgDecisionMaker - next: 6 curr: 4
+2014-11-18 17:39:19,628 - DEBUG - GenAlgDecisionMaker - next gain: 0.000161978933851995
+2014-11-18 17:39:19,629 - DEBUG - GenAlgDecisionMaker - next cost: -0.999838021066148
+2014-11-18 17:39:19,629 - DEBUG - GenAlgDecisionMaker - curr gain: 0.00012893614917122159
+2014-11-18 17:39:19,629 - DEBUG - GenAlgDecisionMaker - next: 5 curr: 4
+2014-11-18 17:39:19,629 - DEBUG - GenAlgDecisionMaker - next gain: 0.00036406158401442037
+2014-11-18 17:39:19,629 - DEBUG - GenAlgDecisionMaker - next cost: -0.9996359384159855
+2014-11-18 17:39:19,629 - DEBUG - GenAlgDecisionMaker - curr gain: 0.00012893614917122159
+2014-11-18 17:39:19,630 - DEBUG - GenAlgDecisionMaker - next: 8 curr: 4
+2014-11-18 17:39:19,630 - DEBUG - GenAlgDecisionMaker - next gain: 0.0001842124410776139
+2014-11-18 17:39:19,630 - DEBUG - GenAlgDecisionMaker - next cost: -0.9998157875589224
+2014-11-18 17:39:19,630 - DEBUG - GenAlgDecisionMaker - curr gain: 0.00012893614917122159
+2014-11-18 17:39:19,630 - DEBUG - GenAlgDecisionMaker - next: 3 curr: 4
+2014-11-18 17:39:19,630 - DEBUG - GenAlgDecisionMaker - next gain: 0.0004057520358011248
+2014-11-18 17:39:19,631 - DEBUG - GenAlgDecisionMaker - next cost: -0.9995942479641988
+2014-11-18 17:39:19,631 - DEBUG - GenAlgDecisionMaker - curr gain: 0.00012893614917122159
+2014-11-18 17:39:19,631 - DEBUG - GenAlgDecisionMaker - action: none
+2014-11-18 17:39:19,631 - DEBUG - GenAlgDecisionMaker - Taking decision with acted: ['done']
+2014-11-18 17:39:19,631 - DEBUG - GenAlgDecisionMaker - Action undertaken: none
+2014-11-18 17:39:19,632 - DEBUG - GenAlgDecisionMaker - state: 4 values:{'cpu': 5, 'num_nodes': 4, 'latency': 0.02, 'max_throughput': 14000.0, 'inlambda': 10000}
+2014-11-18 17:39:19,632 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 3
+2014-11-18 17:39:19,633 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 4
+2014-11-18 17:39:19,635 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 5
+2014-11-18 17:39:19,637 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 6
+2014-11-18 17:39:19,639 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 7
+2014-11-18 17:39:19,643 - DEBUG - GenAlgDecisionMaker - advancing EA for: state 8

@@ -1,0 +1,2429 @@
+--- ./bundler.py	(original)
++++ ./bundler.py	(refactored)
+@@ -47,9 +47,9 @@
+ import shutil
+ import logging
+ import base64
+-import image
+-import utils
+-from exceptions import *
++from . import image
++from . import utils
++from .exceptions import *
+ 
+ BUNDLER_NAME = 'euca-tools'
+ BUNDLER_VERSION = '1.3.2'
+@@ -93,7 +93,7 @@
+             filename = '%s.%02d' % (file, i)
+             part_digest = sha()
+             file_part = open(filename, 'wb')
+-            print 'Part:', self.euca.get_relative_filename(filename)
++            print('Part:', self.euca.get_relative_filename(filename))
+             part_bytes_written = 0
+             while part_bytes_written < IMAGE_SPLIT_CHUNK:
+                 data = in_file.read(IMAGE_IO_CHUNK)
+@@ -112,15 +112,15 @@
+         return (parts, parts_digest)
+ 
+     def check_image(self, image_file, path):
+-        print 'Checking image'
++        print('Checking image')
+         if not os.path.exists(path):
+             os.makedirs(path)
+         image_size = os.path.getsize(image_file)
+         if self.euca.debug:
+-            print 'Image Size:', image_size, 'bytes'
++            print('Image Size:', image_size, 'bytes')
+         if image_size > IMAGE_MAX_SIZE:
+-            print >> sys.stderr, ('warning: this image is larger than 10 GB.  '
+-                                  'It will not work in EC2.')
++            print(('warning: this image is larger than 10 GB.  '
++                                  'It will not work in EC2.'), file=sys.stderr)
+         return image_size
+ 
+     def get_fs_info(self, path):
+@@ -134,19 +134,19 @@
+             dev=os.makedev(os.major(st_dev),os.minor(st_dev))
+             tmpd=tempfile.mkdtemp()
+             devpth=("%s/dev" % tmpd)
+-            os.mknod(devpth,0400 | stat.S_IFBLK ,dev)
++            os.mknod(devpth,0o400 | stat.S_IFBLK ,dev)
+         except:
+             raise
+ 
+         ret = { }
+         pairs = { 'LABEL' : 'label', 'UUID' : 'uuid' , 'FS_TYPE' : 'fs_type' }
+-        for (blkid_n, my_n) in pairs.iteritems():
++        for (blkid_n, my_n) in pairs.items():
+             cmd = [ 'blkid', '-s%s' % blkid_n, '-ovalue', devpth ]
+-            print cmd
++            print(cmd)
+             try:
+                 output = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+                 ret[my_n]=output.rstrip()
+-            except Exception, e:
++            except Exception as e:
+                 os.unlink(devpth)
+                 os.rmdir(tmpd)
+                 raise UnsupportedException("Unable to determine %s for %s" % (blkid_n, path))
+@@ -157,7 +157,7 @@
+    
+     def tarzip_image(self, prefix, file, path):
+         utils.check_prerequisite_command('tar')
+-        print 'Compressing image'
++        print('Compressing image')
+ 
+         targz = '%s.tar.gz' % os.path.join(path, prefix)
+         targzfile = open(targz, 'w')
+@@ -189,11 +189,11 @@
+         zipproc.wait()
+         for p, pname in [(tarproc, 'tar'), (zipproc, 'gzip')]:
+             if p.returncode != 0:
+-                print "'%s' returned error (%i)" % (pname, p.returncode)
++                print("'%s' returned error (%i)" % (pname, p.returncode))
+                 raise CommandFailed
+             
+         if os.path.getsize(targz) <= 0:
+-            print 'Could not tar/compress image'
++            print('Could not tar/compress image')
+             raise CommandFailed
+         return (targz, hexlify(sha_image.digest()))
+ 
+@@ -214,7 +214,7 @@
+         out_file.write(cipher.final())
+ 
+     def encrypt_image(self, file):
+-        print 'Encrypting image'
++        print('Encrypting image')
+         enc_file = '%s.part' % file.replace('.tar.gz', '')
+ 
+         # get 17 bytes of randomness with top bit a '1'.
+@@ -223,24 +223,24 @@
+         gen_key = hex(BN.rand(17 * 8,top=0))
+         key     = gen_key[4:36]
+         if self.euca.debug:
+-            print 'Key: %s' % gen_key
++            print('Key: %s' % gen_key)
+         gen_iv = hex(BN.rand(17 * 8,top=0))
+         iv     = gen_iv[4:36]
+         if self.euca.debug:
+-            print 'IV: %s' % gen_iv
++            print('IV: %s' % gen_iv)
+ 
+         try:
+             k = EVP.Cipher(alg='aes_128_cbc', key=unhexlify(key),
+                            iv=unhexlify(iv), op=1)
+         except TypeError:
+-            print >> sys.stderr
+-            print >> sys.stderr, 'WARNING: retrying encryption to work around a rare RNG bug'
+-            print >> sys.stderr, 'Please report the following values to Eucalyptus Systems at'
+-            print >> sys.stderr, 'https://eucalyptus.atlassian.net/browse/TOOLS-103 to help'
+-            print >> sys.stderr, 'diagnose this issue.'
+-            print >> sys.stderr, 'k: ', key
+-            print >> sys.stderr, 'iv:', iv
+-            print >> sys.stderr
++            print(file=sys.stderr)
++            print('WARNING: retrying encryption to work around a rare RNG bug', file=sys.stderr)
++            print('Please report the following values to Eucalyptus Systems at', file=sys.stderr)
++            print('https://eucalyptus.atlassian.net/browse/TOOLS-103 to help', file=sys.stderr)
++            print('diagnose this issue.', file=sys.stderr)
++            print('k: ', key, file=sys.stderr)
++            print('iv:', iv, file=sys.stderr)
++            print(file=sys.stderr)
+             return self.encrypt_image(file)
+ 
+         in_file = open(file, 'rb')
+@@ -252,7 +252,7 @@
+         return (enc_file, key, iv, bundled_size)
+ 
+     def split_image(self, file):
+-        print 'Splitting image...'
++        print('Splitting image...')
+         return self.split_file(file, IMAGE_SPLIT_CHUNK)
+ 
+     def get_verification_string(self, manifest_string):
+@@ -303,7 +303,7 @@
+                 os.makedirs(directory)
+             encrypted_file = open(encrypted_filename, 'wb')
+             for part in parts:
+-                print 'Part:', self.euca.get_relative_filename(part)
++                print('Part:', self.euca.get_relative_filename(part))
+                 part_filename = os.path.join(src_directory, part)
+                 part_file = open(part_filename, 'rb')
+                 while 1:
+@@ -376,9 +376,9 @@
+ 
+         manifest_file = '%s.manifest.xml' % os.path.join(path, prefix)
+         if self.euca.debug:
+-            print 'Manifest: ', manifest_file
+-
+-        print 'Generating manifest %s' % manifest_file
++            print('Manifest: ', manifest_file)
++
++        print('Generating manifest %s' % manifest_file)
+ 
+         manifest_out_file = open(manifest_file, 'wb')
+         doc = Document()
+@@ -428,7 +428,7 @@
+         if mapping:
+             block_dev_mapping_elem = \
+                 doc.createElement('block_device_mapping')
+-            for vname, dname in mapping.items():
++            for vname, dname in list(mapping.items()):
+                 mapping_elem = doc.createElement('mapping')
+                 virtual_elem = doc.createElement('virtual')
+                 virtual_value = doc.createTextNode(vname)
+@@ -597,7 +597,7 @@
+ 
+     def add_excludes(self, path, excludes):
+         if self.euca.debug:
+-            print 'Reading /etc/mtab...'
++            print('Reading /etc/mtab...')
+         mtab_file = open('/etc/mtab', 'r')
+         while 1:
+             mtab_line = mtab_file.readline()
+@@ -609,7 +609,7 @@
+             if mount_point.find(path) == 0 and fs_type \
+                 not in self.img.ALLOWED_FS_TYPES:
+                 if self.euca.debug:
+-                    print 'Excluding %s...' % mount_point
++                    print('Excluding %s...' % mount_point)
+                 excludes.append(mount_point)
+         mtab_file.close()
+         for banned in self.img.BANNED_MOUNTS:
+@@ -623,7 +623,7 @@
+         if not os.path.exists(destination_path):
+             os.makedirs(destination_path)
+         if self.img == 'Unsupported':
+-            print >> sys.stderr, 'Platform not fully supported.'
++            print('Platform not fully supported.', file=sys.stderr)
+             raise UnsupportedException
+         self.img.create_image(size_in_MB, image_path)
+         self.img.make_fs(image_path, fs_type=fs_type, uuid=uuid, label=label)
+@@ -642,7 +642,7 @@
+                 if not output[1]:
+                     return loop_dev
+             else:
+-                print >> sys.stderr, 'Could not create loopback device. Aborting'
++                print('Could not create loopback device. Aborting', file=sys.stderr)
+                 raise CommandFailed
+             tries += 1
+ 
+@@ -653,10 +653,10 @@
+         if not os.path.exists(tmp_mnt_point):
+             os.makedirs(tmp_mnt_point)
+         if self.euca.debug:
+-            print 'Creating loopback device...'
++            print('Creating loopback device...')
+         loop_dev = self.create_loopback(image_path)
+         if self.euca.debug:
+-            print 'Mounting image...'
++            print('Mounting image...')
+         subprocess.Popen(['mount', loop_dev, tmp_mnt_point],
+               stdout=subprocess.PIPE).communicate()
+         return (tmp_mnt_point, loop_dev)
+@@ -673,9 +673,9 @@
+         rsync_cmd.append(volume_path)
+         rsync_cmd.append(mount_point)
+         if self.euca.debug:
+-            print 'Copying files...'
++            print('Copying files...')
+             for exclude in excludes:
+-                print 'Excluding:', exclude
++                print('Excluding:', exclude)
+ 
+         pipe = subprocess.Popen(rsync_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+         output = pipe.communicate()
+@@ -684,7 +684,7 @@
+             if not os.path.exists(dir_path):
+                 os.mkdir(dir_path)
+                 if dir == 'tmp':
+-                    os.chmod(dir_path, 01777)
++                    os.chmod(dir_path, 0o1777)
+         self.img.make_essential_devs(mount_point)
+         mtab_file = open('/etc/mtab', 'r')
+         while 1:
+@@ -699,8 +699,8 @@
+                 dir_path = os.path.join(mount_point, mount_location)
+                 if not os.path.exists(dir_path):
+                     if self.euca.debug:
+-                        print 'Making essential directory %s' \
+-                            % mount_location
++                        print('Making essential directory %s' \
++                            % mount_location)
+                     os.makedirs(dir_path)
+         mtab_file.close()
+         if pipe.returncode:
+@@ -709,17 +709,17 @@
+             # rsync return code 24: Partial transfer due to vanished source files
+ 
+             if pipe.returncode in (23, 24):
+-                print >> sys.stderr, 'Warning: rsync reports files partially copied:'
+-                print >> sys.stderr, output
++                print('Warning: rsync reports files partially copied:', file=sys.stderr)
++                print(output, file=sys.stderr)
+             else:
+-                print >> sys.stderr, 'Error: rsync failed with return code %d' \
+-                    % pipe.returncode
++                print('Error: rsync failed with return code %d' \
++                    % pipe.returncode, file=sys.stderr)
+                 raise CopyError
+ 
+     def unmount_image(self, mount_point):
+         utils.check_prerequisite_command('umount')
+         if self.euca.debug:
+-            print 'Unmounting image...'
++            print('Unmounting image...')
+         subprocess.Popen(['umount', '-d', mount_point],
+                          stdout=subprocess.PIPE).communicate()[0]
+         os.rmdir(mount_point)
+@@ -731,7 +731,7 @@
+             output = self.copy_to_image(mount_point, volume_path,
+                     excludes)
+             if self.img == 'Unsupported':
+-                print >> sys.stderr, 'Platform not fully supported.'
++                print('Platform not fully supported.', file=sys.stderr)
+                 raise UnsupportedException
+             self.img.add_fstab(mount_point, generate_fstab, fstab_path)
+         except CopyError:
+@@ -744,7 +744,7 @@
+         message = None
+         index = msg.find('<')
+         if index < 0:
+-            print >> sys.stderr, msg
++            print(msg, file=sys.stderr)
+             sys.exit(1)
+         msg = msg[index - 1:]
+         msg = msg.replace('\n', '')
+@@ -763,8 +763,8 @@
+                 if node.nodeType == node.TEXT_NODE:
+                     message = node.data
+ 
+-            print >> sys.stderr, '%s:' % code, message
++            print('%s:' % code, message, file=sys.stderr)
+         except Exception:
+-            print >> sys.stderr, msg
++            print(msg, file=sys.stderr)
+         sys.exit(1)
+ 
+--- ./image.py	(original)
++++ ./image.py	(refactored)
+@@ -34,7 +34,7 @@
+ import os
+ import shutil
+ import subprocess
+-import utils
++from . import utils
+ 
+ IMAGE_IO_CHUNK = 10 * 1024
+ IMAGE_SPLIT_CHUNK = IMAGE_IO_CHUNK * 1024
+@@ -82,7 +82,7 @@
+         dd_cmd.append('bs=1M')
+         dd_cmd.append('seek=%s' % (size_in_MB - 1))
+         if self.debug:
+-            print 'Creating disk image...', image_path
++            print('Creating disk image...', image_path)
+         subprocess.Popen(dd_cmd, subprocess.PIPE).communicate()[0]
+ 
+     def make_fs(self, image_path, fs_type = None, uuid = None, label = None):
+@@ -103,15 +103,15 @@
+             if label: mkfs.extend([ '-L', label ])
+             tunecmd = [ 'xfs_admin', '-U', uuid, image_path ]
+         elif fs_type == "btrfs":
+-            if uuid: raise(UnsupportedException("btrfs with uuid not supported"))
++            if uuid: raise UnsupportedException
+             if label: mkfs.extend([ '-L', label ])
+         else:
+-            raise(UnsupportedException("unsupported fs %s" % fs_type))
++            raise UnsupportedException
+ 
+         utils.check_prerequisite_command(mkfs_prog)
+ 
+         if self.debug:
+-            print 'Creating filesystem with %s' % mkfs
++            print('Creating filesystem with %s' % mkfs)
+ 
+         makefs_cmd = subprocess.Popen(mkfs,subprocess.PIPE).communicate()[0]
+ 
+@@ -142,7 +142,7 @@
+                 shutil.copyfile(fstab_file_path, fstab_copy_path)
+ 
+         if self.debug:
+-            print 'Updating fstab entry'
++            print('Updating fstab entry')
+         fstab_file = open(fstab_file_path, 'w')
+         if fstab:
+             fstab_file.write(fstab)
+@@ -174,15 +174,15 @@
+         self.debug = debug
+ 
+     def create_image(self, size_in_MB, image_path):
+-        print >> sys.stderr, 'Sorry. Solaris not supported yet'
++        print('Sorry. Solaris not supported yet', file=sys.stderr)
+         raise UnsupportedException
+ 
+     def make_fs(self, image_path, fstype = None, uuid = None, label = None):
+-        print >> sys.stderr, 'Sorry. Solaris not supported yet'
++        print('Sorry. Solaris not supported yet', file=sys.stderr)
+         raise UnsupportedException
+ 
+     def make_essential_devs(self, image_path):
+-        print >> sys.stderr, 'Sorry. Solaris not supported yet'
++        print('Sorry. Solaris not supported yet', file=sys.stderr)
+         raise UnsupportedException
+ 
+ 
+--- ./metadata.py	(original)
++++ ./metadata.py	(refactored)
+@@ -32,7 +32,7 @@
+ #         Mitch Garnaat mgarnaat@eucalyptus.com
+ 
+ from boto.utils import get_instance_metadata
+-from exceptions import MetadataReadError
++from .exceptions import MetadataReadError
+ 
+ class MetaData(object):
+ 
+--- ./utils.py	(original)
++++ ./utils.py	(refactored)
+@@ -41,10 +41,10 @@
+     try:
+         output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE).communicate()
+-    except OSError, e:
++    except OSError as e:
+         error_string = '%s' % e
+         if 'No such' in error_string:
+-            print >> sys.stderr, 'Command %s not found. Is it installed?' % command
++            print('Command %s not found. Is it installed?' % command, file=sys.stderr)
+             raise exceptions.NotFoundError
+         else:
+             raise OSError(e)
+@@ -112,11 +112,11 @@
+             if hasattr(val,'__iter__'):
+                 val = ','.join(val)
+             items.append(val)
+-        print "INSTANCE\t%s" % '\t'.join(items)
++        print("INSTANCE\t%s" % '\t'.join(items))
+         if hasattr(instance, 'tags') and isinstance(instance.tags, dict):
+             for tag in instance.tags:
+-                print '\t'.join(('TAG', 'instance', instance.id, tag,
+-                                 instance.tags[tag]))
++                print('\t'.join(('TAG', 'instance', instance.id, tag,
++                                 instance.tags[tag])))
+ 
+ def print_version_if_necessary():
+     """
+@@ -126,8 +126,8 @@
+     This is a hackish workaround for a roboto limitation in boto 2.1.1.
+     """
+     if '--version' in sys.argv:
+-        print 'euca2ools %s (%s)' % (__version__, __codename__)
++        print('euca2ools %s (%s)' % (__version__, __codename__))
+         if os.path.isfile('/etc/eucalyptus/eucalyptus-version'):
+             with open('/etc/eucalyptus/eucalyptus-version') as version_file:
+-                print 'eucalyptus %s' % version_file.readline().strip()
++                print('eucalyptus %s' % version_file.readline().strip())
+         sys.exit()
+--- ./commands/eucacommand.py	(original)
++++ ./commands/eucacommand.py	(refactored)
+@@ -37,7 +37,7 @@
+ import socket
+ import sys
+ import textwrap
+-import urlparse
++import urllib.parse
+ import euca2ools
+ import euca2ools.utils
+ import euca2ools.exceptions
+@@ -69,10 +69,10 @@
+             else:
+                 debugger.post_mortem(tb)
+         elif debug_flag:
+-            print >> sys.stderr, traceback.print_tb(tb)
++            print(traceback.print_tb(tb), file=sys.stderr)
+             sys.exit(1)
+         else:
+-            print >> sys.stderr, value
++            print(value, file=sys.stderr)
+             sys.exit(1)
+ 
+     return excepthook
+@@ -157,8 +157,8 @@
+             (opts, args) = getopt.gnu_getopt(sys.argv[1:],
+                                              self.short_options(),
+                                              self.long_options())
+-        except getopt.GetoptError, e:
+-            print >> sys.stderr, e
++        except getopt.GetoptError as e:
++            print(e, file=sys.stderr)
+             sys.exit(1)
+         for (name, value) in opts:
+             if name in ('-h', '--help'):
+@@ -300,16 +300,16 @@
+             self.display_error_and_exit(msg)
+ 
+     def version(self):
+-        print 'euca2ools %s (%s)' % (euca2ools.__version__, euca2ools.__codename__)
++        print('euca2ools %s (%s)' % (euca2ools.__version__, euca2ools.__codename__))
+         if os.path.isfile('/etc/eucalyptus/eucalyptus-version'):
+             with open('/etc/eucalyptus/eucalyptus-version') as version_file:
+-                print 'eucalyptus %s' % version_file.readline().strip()
++                print('eucalyptus %s' % version_file.readline().strip())
+         sys.exit(0)
+ 
+     def param_usage(self, plist, label, n=30):
+         nn = 80 - n - 4
+         if plist:
+-            print '\n%s' % label
++            print('\n%s' % label)
+             for opt in plist:
+                 names = []
+                 if opt.short_name:
+@@ -324,20 +324,20 @@
+                     vv = 'Valid Values: %s' % '|'.join(opt.choices)
+                     doclines += textwrap.wrap(vv, nn)
+                 if doclines:
+-                    print '    %s%s' % (','.join(names).ljust(n), doclines[0])
++                    print('    %s%s' % (','.join(names).ljust(n), doclines[0]))
+                     for line in doclines[1:]:
+-                        print '%s%s' % (' '*(n+4), line)
++                        print('%s%s' % (' '*(n+4), line))
+ 
+     def filter_usage(self, n=30):
+         if self.Filters:
+             nn = 80 - n - 4
+-            print '\nAVAILABLE FILTERS'
++            print('\nAVAILABLE FILTERS')
+             for filter in self.Filters:
+                 doc = textwrap.dedent(filter.doc)
+                 doclines = textwrap.wrap(doc, nn, fix_sentence_endings=True)
+-                print '    %s%s' % (filter.name.ljust(n), doclines[0])
++                print('    %s%s' % (filter.name.ljust(n), doclines[0]))
+                 for line in doclines[1:]:
+-                    print '%s%s' % (' '*(n+4), line)
++                    print('%s%s' % (' '*(n+4), line))
+                 
+ 
+     def option_synopsis(self, options):
+@@ -381,12 +381,12 @@
+                 arg_names.append(name)
+             t += ' '.join(arg_names)
+         lines = textwrap.wrap(t, 80-n)
+-        print s, lines[0]
++        print(s, lines[0])
+         for line in lines[1:]:
+-            print '%s%s' % (' '*n, line)
++            print('%s%s' % (' '*n, line))
+                 
+     def usage(self):
+-        print '%s\n' % self.Description
++        print('%s\n' % self.Description)
+         self.synopsis()
+         self.param_usage(self.required()+self.required_args(),
+                          'REQUIRED PARAMETERS')
+@@ -396,9 +396,9 @@
+ 
+     def display_error_and_exit(self, exc):
+         try:
+-            print >> sys.stderr, '%s: %s' % (exc.error_code, exc.error_message)
++            print('%s: %s' % (exc.error_code, exc.error_message), file=sys.stderr)
+         except:
+-            print >> sys.stderr, '%s' % exc
++            print('%s' % exc, file=sys.stderr)
+         finally:
+             sys.exit(1)
+ 
+@@ -434,7 +434,7 @@
+                 self.environ[v] = os.getenv(v)
+ 
+     def get_environ(self, name):
+-        if self.environ.has_key(name):
++        if name in self.environ:
+             value = self.environ[name]
+             if value:
+                 return self.environ[name]
+@@ -446,30 +446,30 @@
+             if not self.euca_cert_path:
+                 self.euca_cert_path = self.environ['EUCA_CERT']
+                 if not self.euca_cert_path:
+-                    print >> sys.stderr, 'EUCA_CERT variable must be set.'
++                    print('EUCA_CERT variable must be set.', file=sys.stderr)
+                     raise euca2ools.exceptions.ConnectionFailed
+             if not self.euca_private_key_path:
+                 self.euca_private_key_path = self.environ['EUCA_PRIVATE_KEY']
+                 if not self.euca_private_key_path:
+-                    print >> sys.stderr, 'EUCA_PRIVATE_KEY variable must be set.'
++                    print('EUCA_PRIVATE_KEY variable must be set.', file=sys.stderr)
+                     raise euca2ools.exceptions.ConnectionFailed
+         if not self.ec2_user_access_key:
+             self.ec2_user_access_key = self.environ['EC2_ACCESS_KEY']
+             if not self.ec2_user_access_key:
+-                print >> sys.stderr, 'EC2_ACCESS_KEY environment variable must be set.'
++                print('EC2_ACCESS_KEY environment variable must be set.', file=sys.stderr)
+                 raise euca2ools.exceptions.ConnectionFailed
+ 
+         if not self.ec2_user_secret_key:
+             self.ec2_user_secret_key = self.environ['EC2_SECRET_KEY']
+             if not self.ec2_user_secret_key:
+-                print >> sys.stderr, 'EC2_SECRET_KEY environment variable must be set.'
++                print('EC2_SECRET_KEY environment variable must be set.', file=sys.stderr)
+                 raise euca2ools.exceptions.ConnectionFailed
+ 
+     def get_connection_details(self):
+         self.port = None
+         self.service_path = '/'
+         
+-        rslt = urlparse.urlparse(self.url)
++        rslt = urllib.parse.urlparse(self.url)
+         if rslt.scheme == 'https':
+             self.is_secure = True
+         else:
+@@ -490,8 +490,8 @@
+             if not self.url:
+                 self.url = \
+                     'http://localhost:8773/services/Walrus'
+-                print >> sys.stderr, 'S3_URL not specified. Trying %s' \
+-                    % self.url
++                print('S3_URL not specified. Trying %s' \
++                    % self.url, file=sys.stderr)
+ 
+         self.get_connection_details()
+ 
+@@ -520,15 +520,15 @@
+             self.region.name = self.region_name
+             try:
+                 self.url = self.get_endpoint_url(self.region.name)
+-            except KeyError, err:
++            except KeyError as err:
+                 self.display_error_and_exit(err.message)
+         elif not self.url:
+             self.url = self.environ['EC2_URL']
+             if not self.url:
+                 self.url = \
+                     'http://localhost:8773/services/Eucalyptus'
+-                print >> sys.stderr, 'EC2_URL not specified. Trying %s' \
+-                    % self.url
++                print('EC2_URL not specified. Trying %s' \
++                    % self.url, file=sys.stderr)
+ 
+         if not self.region.endpoint:
+             self.get_connection_details()
+@@ -568,7 +568,7 @@
+                 msg = 'Unknown connection type: %s' % conn_type
+                 self.display_error_and_exit(msg)
+             return conn
+-        except euca2ools.exceptions.EucaError, ex:
++        except euca2ools.exceptions.EucaError as ex:
+             self.display_error_and_exit(ex)
+ 
+     def make_request_cli(self, connection, request_name, **params):
+@@ -584,11 +584,11 @@
+                 params['filters'] = self.filters
+             method = getattr(connection, request_name)
+         except AttributeError:
+-            print >> sys.stderr, 'Unknown request: %s' % request_name
++            print('Unknown request: %s' % request_name, file=sys.stderr)
+             sys.exit(1)
+         try:
+             return method(**params)
+-        except Exception, ex:
++        except Exception as ex:
+             self.display_error_and_exit(ex)
+ 
+     def get_relative_filename(self, filename):
+@@ -635,7 +635,7 @@
+         """
+         endpoint_template = 'https://ec2.%s.amazonaws.com/'
+         endpoint_url      = endpoint_template % region_name
+-        endpoint_dnsname  = urlparse.urlparse(endpoint_url).hostname
++        endpoint_dnsname  = urllib.parse.urlparse(endpoint_url).hostname
+         try:
+             socket.getaddrinfo(endpoint_dnsname, None)
+         except socket.gaierror:
+--- ./commands/euare/addgrouppolicy.py	(original)
++++ ./commands/euare/addgrouppolicy.py	(refactored)
+@@ -102,7 +102,7 @@
+ 
+     def cli_formatter(self, data):
+         if self.cli_options.output:
+-            print self.policy
++            print(self.policy)
+ 
+     def main(self, **args):
+         self.process_args()
+--- ./commands/euare/adduserpolicy.py	(original)
++++ ./commands/euare/adduserpolicy.py	(refactored)
+@@ -102,7 +102,7 @@
+ 
+     def cli_formatter(self, data):
+         if self.cli_options.output:
+-            print self.policy
++            print(self.policy)
+ 
+     def main(self, **args):
+         self.process_args()
+--- ./commands/euare/createaccesskey.py	(original)
++++ ./commands/euare/createaccesskey.py	(refactored)
+@@ -59,8 +59,8 @@
+         )]
+ 
+     def cli_formatter(self, data):
+-        print data.AccessKey['AccessKeyId']
+-        print data.AccessKey['SecretAccessKey']
++        print(data.AccessKey['AccessKeyId'])
++        print(data.AccessKey['SecretAccessKey'])
+ 
+     def main(self, **args):
+        return self.send(**args)
+--- ./commands/euare/createaccount.py	(original)
++++ ./commands/euare/createaccount.py	(refactored)
+@@ -53,7 +53,7 @@
+         ]
+ 
+     def cli_formatter(self, data):
+-        print data.Account['AccountName'], '\t', data.Account['AccountId']
++        print(data.Account['AccountName'], '\t', data.Account['AccountId'])
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/creategroup.py	(original)
++++ ./commands/euare/creategroup.py	(refactored)
+@@ -75,8 +75,8 @@
+ 
+     def cli_formatter(self, data):
+         if self.cli_options.verbose:
+-            print data.Arn
+-            print data.GroupId
++            print(data.Arn)
++            print(data.GroupId)
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/createsigningcertificate.py	(original)
++++ ./commands/euare/createsigningcertificate.py	(refactored)
+@@ -59,9 +59,9 @@
+         )]
+ 
+     def cli_formatter(self, data):
+-        print data.Certificate['CertificateId']
+-        print data.Certificate['CertificateBody']
+-        print data.Certificate['PrivateKey']
++        print(data.Certificate['CertificateId'])
++        print(data.Certificate['CertificateBody'])
++        print(data.Certificate['PrivateKey'])
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/createuser.py	(original)
++++ ./commands/euare/createuser.py	(refactored)
+@@ -90,11 +90,11 @@
+ 
+     def cli_formatter(self, data):
+         if self.cli_options.verbose:
+-            print data['user_data'].Arn
+-            print data['user_data'].UserId
++            print(data['user_data'].Arn)
++            print(data['user_data'].UserId)
+         if self.cli_options.create_accesskey:
+-            print data['access_key'].AccessKey['AccessKeyId']
+-            print data['access_key'].AccessKey['SecretAccessKey']
++            print(data['access_key'].AccessKey['AccessKeyId'])
++            print(data['access_key'].AccessKey['SecretAccessKey'])
+ 
+     def main(self, **args):
+         data = {}
+--- ./commands/euare/deletegroup.py	(original)
++++ ./commands/euare/deletegroup.py	(refactored)
+@@ -81,12 +81,12 @@
+ 
+     def cli_formatter(self, data):
+         if data and self.pretend:
+-            print 'users'
++            print('users')
+             for user in data['users']:
+-                print '\t%s' % user['Arn']
+-            print 'policies'
++                print('\t%s' % user['Arn'])
++            print('policies')
+             for policy in data['policies']:
+-                print '\t%s' % policy
++                print('\t%s' % policy)
+ 
+     def main(self, **args):
+         data = {}
+--- ./commands/euare/deleteuser.py	(original)
++++ ./commands/euare/deleteuser.py	(refactored)
+@@ -89,18 +89,18 @@
+ 
+     def cli_formatter(self, data):
+         if self.pretend:
+-            print 'accesskeys'
++            print('accesskeys')
+             for ak in data['access_keys']:
+-                print '\t%s' % ak['AccessKeyId']
+-            print 'policies'
++                print('\t%s' % ak['AccessKeyId'])
++            print('policies')
+             for policy in data['policies']:
+-                print '\t%s' % policy
+-            print 'certificates'
++                print('\t%s' % policy)
++            print('certificates')
+             for cert in data['certificates']:
+-                print '\t%s' % cert['CertificateId']
+-            print 'groups'
++                print('\t%s' % cert['CertificateId'])
++            print('groups')
+             for group in data['groups']:
+-                print '\t%s' % group['Arn']
++                print('\t%s' % group['Arn'])
+ 
+     def main(self, **args):
+         recursive_local = self.cli_options.recursive or \
+@@ -129,7 +129,7 @@
+             try:
+                 d = obj.main(user_name=user_name)
+                 data['login_profile'] = d.LoginProfile
+-            except BotoServerError, err:
++            except BotoServerError as err:
+                 if err.error_code == 'NoSuchEntity':
+                     data['login_profile'] = None
+                 else:
+--- ./commands/euare/getaccountpolicy.py	(original)
++++ ./commands/euare/getaccountpolicy.py	(refactored)
+@@ -59,7 +59,7 @@
+         )]
+ 
+     def cli_formatter(self, data):
+-        print data.PolicyDocument
++        print(data.PolicyDocument)
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/getaccountsummary.py	(original)
++++ ./commands/euare/getaccountsummary.py	(refactored)
+@@ -54,7 +54,7 @@
+     def cli_formatter(self, data):
+         if data:
+             for entry in data.SummaryMap:
+-                print '%s: %s' % (entry['key'], entry['value'])
++                print('%s: %s' % (entry['key'], entry['value']))
+ 
+     def main(self, **args):
+         self.list_markers = ['SummaryMap']
+--- ./commands/euare/getgroup.py	(original)
++++ ./commands/euare/getgroup.py	(refactored)
+@@ -74,10 +74,10 @@
+ 
+ 
+     def cli_formatter(self, data):
+-        print data.Group['Arn']
+-        print '\tusers'
++        print(data.Group['Arn'])
++        print('\tusers')
+         for user in data.Users:
+-            print '\t%s' % user['Arn']
++            print('\t%s' % user['Arn'])
+             
+     def main(self, **args):
+         self.list_markers.append('Users')
+--- ./commands/euare/getgrouppolicy.py	(original)
++++ ./commands/euare/getgrouppolicy.py	(refactored)
+@@ -35,7 +35,7 @@
+ from boto.roboto.param import Param
+ import euca2ools.commands.euare
+ import euca2ools.utils
+-import urllib
++import urllib.request, urllib.parse, urllib.error
+ 
+ 
+ class GetGroupPolicy(AWSQueryRequest):
+@@ -67,7 +67,7 @@
+         )]
+ 
+     def cli_formatter(self, data):
+-        print urllib.unquote(data.PolicyDocument)
++        print(urllib.parse.unquote(data.PolicyDocument))
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/getldapsyncstatus.py	(original)
++++ ./commands/euare/getldapsyncstatus.py	(refactored)
+@@ -44,8 +44,8 @@
+     Params = []
+ 
+     def cli_formatter(self, data):
+-        print "SyncEnabled\t", data.SyncEnabled
+-        print "InSync\t", data.InSync
++        print("SyncEnabled\t", data.SyncEnabled)
++        print("InSync\t", data.InSync)
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/getloginprofile.py	(original)
++++ ./commands/euare/getloginprofile.py	(refactored)
+@@ -59,7 +59,7 @@
+         )]
+ 
+     def cli_formatter(self, data):
+-        print data.LoginProfile['UserName']
++        print(data.LoginProfile['UserName'])
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/getuser.py	(original)
++++ ./commands/euare/getuser.py	(refactored)
+@@ -66,12 +66,12 @@
+         )]
+ 
+     def cli_formatter(self, data):
+-        print data.User['Arn']
+-        print data.User['UserId']
++        print(data.User['Arn'])
++        print(data.User['UserId'])
+         if 'Enabled' in data.User:
+-            print data.User['Enabled']
+-            print data.User['RegStatus']
+-            print data.User['PasswordExpiration']
++            print(data.User['Enabled'])
++            print(data.User['RegStatus'])
++            print(data.User['PasswordExpiration'])
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/getuserinfo.py	(original)
++++ ./commands/euare/getuserinfo.py	(refactored)
+@@ -67,7 +67,7 @@
+ 
+     def cli_formatter(self, data):
+         for info in data.Infos:
+-            print info['Key'], "\t", info['Value']
++            print(info['Key'], "\t", info['Value'])
+ 
+     def main(self, **args):
+         self.list_markers.append('Infos')
+--- ./commands/euare/getuserpolicy.py	(original)
++++ ./commands/euare/getuserpolicy.py	(refactored)
+@@ -35,7 +35,7 @@
+ from boto.roboto.param import Param
+ import euca2ools.commands.euare
+ import euca2ools.utils
+-import urllib
++import urllib.request, urllib.parse, urllib.error
+ 
+ 
+ class GetUserPolicy(AWSQueryRequest):
+@@ -67,7 +67,7 @@
+         )]
+ 
+     def cli_formatter(self, data):
+-        print urllib.unquote(data.PolicyDocument)
++        print(urllib.parse.unquote(data.PolicyDocument))
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/listaccesskeys.py	(original)
++++ ./commands/euare/listaccesskeys.py	(refactored)
+@@ -74,8 +74,8 @@
+ 
+     def cli_formatter(self, data):
+         for key in data.AccessKeyMetadata:
+-            print key['AccessKeyId']
+-            print key['Status']
++            print(key['AccessKeyId'])
++            print(key['Status'])
+ 
+     def main(self, **args):
+         self.list_markers.append('AccessKeyMetadata')
+--- ./commands/euare/listaccountaliases.py	(original)
++++ ./commands/euare/listaccountaliases.py	(refactored)
+@@ -54,7 +54,7 @@
+     def cli_formatter(self, data):
+         if data:
+             for member in data.AccountAliases:
+-                print 'Alias: %s' % member
++                print('Alias: %s' % member)
+ 
+     def main(self, **args):
+         self.list_markers = ['AccountAliases']
+--- ./commands/euare/listaccountpolicies.py	(original)
++++ ./commands/euare/listaccountpolicies.py	(refactored)
+@@ -72,7 +72,7 @@
+         #      This will require another round trip
+         #      for each policy name.
+         for policy in data.PolicyNames:
+-            print policy
++            print(policy)
+ 
+     def main(self, **args):
+         self.list_markers.append('PolicyNames')
+--- ./commands/euare/listaccounts.py	(original)
++++ ./commands/euare/listaccounts.py	(refactored)
+@@ -46,7 +46,7 @@
+ 
+     def cli_formatter(self, data):
+         for account in data.Accounts:
+-            print account['AccountName'], '\t', account['AccountId']
++            print(account['AccountName'], '\t', account['AccountId'])
+ 
+     def main(self, **args):
+         self.list_markers.append('Accounts')
+--- ./commands/euare/listgrouppolicies.py	(original)
++++ ./commands/euare/listgrouppolicies.py	(refactored)
+@@ -95,7 +95,7 @@
+                     data = obj.main(group_name=group_name, policy_name=policy)
+                     obj.cli_formatter(data)
+                 else:
+-                    print policy
++                    print(policy)
+ 
+     def main(self, **args):
+         self.list_markers.append('PolicyNames')
+--- ./commands/euare/listgroups.py	(original)
++++ ./commands/euare/listgroups.py	(refactored)
+@@ -73,9 +73,9 @@
+         )]
+ 
+     def cli_formatter(self, data):
+-        print 'groups'
++        print('groups')
+         for group in data.Groups:
+-            print '\t%s' % group['Arn']
++            print('\t%s' % group['Arn'])
+ 
+     def main(self, **args):
+         self.list_markers.append('Groups')
+--- ./commands/euare/listgroupsforuser.py	(original)
++++ ./commands/euare/listgroupsforuser.py	(refactored)
+@@ -74,7 +74,7 @@
+ 
+     def cli_formatter(self, data):
+         for group in data.Groups:
+-            print group['Arn']
++            print(group['Arn'])
+ 
+     def main(self, **args):
+         self.list_markers.append('Groups')
+--- ./commands/euare/listmfadevices.py	(original)
++++ ./commands/euare/listmfadevices.py	(refactored)
+@@ -70,7 +70,7 @@
+ 
+     def cli_formatter(self, data):
+         for mfa in data.MFADevices:
+-            print mfa['SerialNumber']
++            print(mfa['SerialNumber'])
+ 
+     def main(self, **args):
+         self.list_markers.append('MFADevices')
+--- ./commands/euare/listsigningcertificates.py	(original)
++++ ./commands/euare/listsigningcertificates.py	(refactored)
+@@ -82,10 +82,10 @@
+ 
+     def cli_formatter(self, data):
+         for cert in data.Certificates:
+-            print cert['CertificateId']
++            print(cert['CertificateId'])
+             if self.cli_options.verbose:
+-                print cert['CertificateBody']
+-            print cert['Status']
++                print(cert['CertificateBody'])
++            print(cert['Status'])
+             
+     def main(self, **args):
+         self.list_markers.append('Certificates')
+--- ./commands/euare/listuserpolicies.py	(original)
++++ ./commands/euare/listuserpolicies.py	(refactored)
+@@ -95,7 +95,7 @@
+                     data = obj.main(user_name=user_name, policy_name=policy)
+                     obj.cli_formatter(data)
+                 else:
+-                    print policy
++                    print(policy)
+ 
+     def main(self, **args):
+         self.list_markers.append('PolicyNames')
+--- ./commands/euare/listusers.py	(original)
++++ ./commands/euare/listusers.py	(refactored)
+@@ -74,7 +74,7 @@
+ 
+     def cli_formatter(self, data):
+         for user in data.Users:
+-            print user['Arn']
++            print(user['Arn'])
+             
+     def main(self, **args):
+         self.list_markers.append('Users')
+--- ./commands/euare/templaterequest.py	(original)
++++ ./commands/euare/templaterequest.py	(refactored)
+@@ -147,8 +147,8 @@
+         out but you can easily pick and choose what you want once
+         you understand the output.
+         """
+-        print 'Output from MyRequest:'
+-        print data
++        print('Output from MyRequest:')
++        print(data)
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euare/uploadsigningcertificate.py	(original)
++++ ./commands/euare/uploadsigningcertificate.py	(refactored)
+@@ -73,7 +73,7 @@
+         )]
+ 
+     def cli_formatter(self, data):
+-        print data.Certificate['CertificateId']
++        print(data.Certificate['CertificateId'])
+ 
+     def main(self, **args):
+         return self.send(**args)
+--- ./commands/euca/allocateaddress.py	(original)
++++ ./commands/euca/allocateaddress.py	(refactored)
+@@ -45,6 +45,6 @@
+     def main_cli(self):
+         address = self.main()
+         if address:
+-            print 'ADDRESS\t%s' % address.public_ip
++            print('ADDRESS\t%s' % address.public_ip)
+ 
+ 
+--- ./commands/euca/associateaddress.py	(original)
++++ ./commands/euca/associateaddress.py	(refactored)
+@@ -54,7 +54,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'ADDRESS\t%s\t%s' % (self.ip, self.instance_id)
++            print('ADDRESS\t%s\t%s' % (self.ip, self.instance_id))
+         else:
+             self.error_exit()
+ 
+--- ./commands/euca/attachvolume.py	(original)
++++ ./commands/euca/attachvolume.py	(refactored)
+@@ -58,7 +58,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'VOLUME\t%s' % self.volume_id
++            print('VOLUME\t%s' % self.volume_id)
+         else:
+             self.error_exit()
+ 
+--- ./commands/euca/authorize.py	(original)
++++ ./commands/euca/authorize.py	(refactored)
+@@ -103,7 +103,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'GROUP\t%s' % self.group_name
++            print('GROUP\t%s' % self.group_name)
+             permission_string = 'PERMISSION\t%s\tALLOWS' % self.group_name
+             if self.protocol:
+                 permission_string += '\t%s' % self.protocol
+@@ -118,6 +118,6 @@
+                 permission_string += '\tGRPNAME\t%s' % self.source_group
+             if self.source_subnet:
+                 permission_string += '\tFROM\tCIDR\t%s' % self.source_subnet
+-            print permission_string
++            print(permission_string)
+         else:
+             self.error_exit()
+--- ./commands/euca/bundleinstance.py	(original)
++++ ./commands/euca/bundleinstance.py	(refactored)
+@@ -76,7 +76,7 @@
+                                                         bundle.state, 
+                                                         bundle.start_time,
+                                                         bundle.update_time)
+-        print 'BUNDLE\t%s' % (bundle_string)
++        print('BUNDLE\t%s' % (bundle_string))
+ 
+     def generate_default_policy(self, bucket, prefix, expiration, acl):
+         delta = timedelta(hours=expiration)
+--- ./commands/euca/bundleupload.py	(original)
++++ ./commands/euca/bundleupload.py	(refactored)
+@@ -143,11 +143,11 @@
+         self.upload_parts(bucket_instance, self.directory, parts,
+                           None, self.acl, self.policy, self.policy_signature)
+         manifest_path = self.get_relative_filename(manifest_path)
+-        print "Uploaded image as %s/%s" % (self.bucket, manifest_path)
++        print("Uploaded image as %s/%s" % (self.bucket, manifest_path))
+         bucket_instance.connection.make_request(bucket=self.bucket,
+                                                 key=manifest_path,
+                                                 action='ValidateImage')
+-        print 'Validated manifest %s/%s' % (self.bucket, manifest_path)
++        print('Validated manifest %s/%s' % (self.bucket, manifest_path))
+  
+     def main_cli(self):
+         self.main()
+--- ./commands/euca/bundlevol.py	(original)
++++ ./commands/euca/bundlevol.py	(refactored)
+@@ -118,7 +118,7 @@
+         if os.geteuid() == 0:
+             return
+         else:
+-            print >> sys.stderr, 'Must be superuser to execute this command.'
++            print('Must be superuser to execute this command.', file=sys.stderr)
+             sys.exit()
+ 
+     def parse_excludes(self, excludes_string):
+@@ -137,34 +137,34 @@
+                 try:
+                     ramdisk_id = md.get_instance_ramdisk()
+                 except MetadataReadError:
+-                    print >> sys.stderr, 'Unable to read ramdisk id'
++                    print('Unable to read ramdisk id', file=sys.stderr)
+ 
+             if not kernel_id:
+                 try:
+                     kernel_id = md.get_instance_kernel()
+                 except MetadataReadError:
+-                    print >> sys.stderr, 'Unable to read kernel id'
++                    print('Unable to read kernel id', file=sys.stderr)
+ 
+             if not block_dev_mapping:
+                 try:
+                     block_dev_mapping = \
+                         md.get_instance_block_device_mappings()
+                 except MetadataReadError:
+-                    print >> sys.stderr, 'Unable to read block device mapping'
++                    print('Unable to read block device mapping', file=sys.stderr)
+ 
+             try:
+                 product_codes = md.get_instance_product_codes().split('\n'
+                         )
+             except MetadataReadError:
+-                print >> sys.stderr, 'Unable to read product codes'
++                print('Unable to read product codes', file=sys.stderr)
+ 
+             try:
+                 ancestor_ami_ids = md.get_ancestor_ami_ids().split('\n')
+             except MetadataReadError:
+-                print >> sys.stderr, 'Unable to read ancestor ids'
++                print('Unable to read ancestor ids', file=sys.stderr)
+         except IOError:
+ 
+-            print >> sys.stderr, 'Unable to read instance metadata. Pass the --no-inherit option if you wish to exclude instance metadata.'
++            print('Unable to read instance metadata. Pass the --no-inherit option if you wish to exclude instance metadata.', file=sys.stderr)
+             sys.exit()
+ 
+         return (ramdisk_id, kernel_id, block_dev_mapping, product_codes,
+@@ -238,13 +238,13 @@
+              ancestor_ami_ids) = self.get_instance_metadata(self.ramdisk_id,
+                                                             self.kernel_id,
+                                                             self.block_device_mapping)
+-        if self.product_codes and isinstance(self.product_codes, basestring):
++        if self.product_codes and isinstance(self.product_codes, str):
+             self.product_codes = self.add_product_codes(self.product_codes)
+ 
+         try:
+             fsinfo = bundler.get_fs_info(self.volume_path)
+-        except UnsupportedException, e:
+-            print >> sys.stderr, e
++        except UnsupportedException as e:
++            print(e, file=sys.stderr)
+             sys.exit(1)
+         try:
+             image_path = bundler.make_image(self.size, excludes, self.prefix,
+@@ -270,7 +270,7 @@
+             bundler.copy_volume(image_path, self.volume_path, excludes,
+                                 self.generate_fstab, self.fstab_path)
+         except CopyError:
+-            print >> sys.stderr, 'Unable to copy files'
++            print('Unable to copy files', file=sys.stderr)
+             self.cleanup(image_path)
+             sys.exit(1)
+         except (NotFoundError, CommandFailed, UnsupportedException):
+--- ./commands/euca/cancelbundletask.py	(original)
++++ ./commands/euca/cancelbundletask.py	(refactored)
+@@ -49,7 +49,7 @@
+             bundle.state,
+             bundle.start_time,
+             bundle.update_time)
+-        print 'BUNDLE\t%s' % bundle_string
++        print('BUNDLE\t%s' % bundle_string)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/checkbucket.py	(original)
++++ ./commands/euca/checkbucket.py	(refactored)
+@@ -45,7 +45,7 @@
+ 
+     def main(self):
+         conn = self.make_connection_cli(conn_type='s3')
+-        print 'Checking bucket: %s' % self.bucket
++        print('Checking bucket: %s' % self.bucket)
+         try:
+             return conn.get_bucket(self.bucket)
+         except S3ResponseError:
+--- ./commands/euca/confirmproductinstance.py	(original)
++++ ./commands/euca/confirmproductinstance.py	(refactored)
+@@ -57,4 +57,4 @@
+             product_string += 'true'
+         else:
+             product_string += 'false'
+-        print product_string
++        print(product_string)
+--- ./commands/euca/createimage.py	(original)
++++ ./commands/euca/createimage.py	(refactored)
+@@ -65,5 +65,5 @@
+     def main_cli(self):
+         image_id = self.main()
+         if image_id:
+-            print 'IMAGE\t%s' % image_id
++            print('IMAGE\t%s' % image_id)
+ 
+--- ./commands/euca/createkeypair.py	(original)
++++ ./commands/euca/createkeypair.py	(refactored)
+@@ -50,10 +50,10 @@
+                   cardinality=1, optional=False)]
+ 
+     def display_fingerprint(self, keypair):
+-        print 'KEYPAIR\t%s\t%s' % (keypair.name, keypair.fingerprint)
++        print('KEYPAIR\t%s\t%s' % (keypair.name, keypair.fingerprint))
+ 
+     def display_keypair(self, keypair):
+-        print keypair.material
++        print(keypair.material)
+ 
+     def save_keypair_to_file(self, keypair):
+         keyfile = open(self.filename, 'w')
+--- ./commands/euca/createsecuritygroup.py	(original)
++++ ./commands/euca/createsecuritygroup.py	(refactored)
+@@ -46,7 +46,7 @@
+                   cardinality=1, optional=False)]
+ 
+     def display_group(self, group):
+-        print 'GROUP\t%s\t%s' % (group.name, group.description)
++        print('GROUP\t%s\t%s' % (group.name, group.description))
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/createsnapshot.py	(original)
++++ ./commands/euca/createsnapshot.py	(refactored)
+@@ -51,7 +51,7 @@
+         snapshot_string = '%s\t%s\t%s\t%s\t%s\t%s' % (snapshot.id,
+                 snapshot.volume_id, snapshot.status, snapshot.start_time,
+                 snapshot.progress, snapshot.description)
+-        print 'SNAPSHOT\t%s' % snapshot_string
++        print('SNAPSHOT\t%s' % snapshot_string)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/createtags.py	(original)
++++ ./commands/euca/createtags.py	(refactored)
+@@ -68,6 +68,6 @@
+                 for name in self.tags:
+                     value = self.tags.get(name, '')
+                     s = 'TAG\t%s\t%s\t%s' % (resource_id, name, value)
+-                    print s
++                    print(s)
+         else:
+             self.error_exit()
+--- ./commands/euca/createvolume.py	(original)
++++ ./commands/euca/createvolume.py	(refactored)
+@@ -59,7 +59,7 @@
+         if volume.zone:
+             volume_string += '\t%s' % volume.zone
+         volume_string += '\t%s\t%s' % (volume.status, volume.create_time)
+-        print 'VOLUME\t%s' % volume_string
++        print('VOLUME\t%s' % volume_string)
+ 
+     def main(self):
+         if (self.size or self.snapshot) and self.zone:
+--- ./commands/euca/deletebundle.py	(original)
++++ ./commands/euca/deletebundle.py	(refactored)
+@@ -76,8 +76,8 @@
+         s3conn = self.make_connection_cli('s3')
+         try:
+             bucket_instance = s3conn.get_bucket(bucket)
+-        except S3ResponseError, s3error:
+-            print >> sys.stderr, 'Unable to get bucket %s' % bucket
++        except S3ResponseError as s3error:
++            print('Unable to get bucket %s' % bucket, file=sys.stderr)
+             sys.exit()
+         return bucket_instance
+ 
+@@ -93,7 +93,7 @@
+                     if node.nodeType == node.TEXT_NODE:
+                         parts.append(node.data)
+         except:
+-            print >> sys.stderr, 'problem parsing: %s' % manifest_filename
++            print('problem parsing: %s' % manifest_filename, file=sys.stderr)
+         return parts
+ 
+     def get_manifests(self, bucket):
+@@ -116,11 +116,11 @@
+             manifest_file = open(manifest_filename, 'wb')
+             try:
+                 k.get_contents_to_file(manifest_file)
+-            except S3ResponseError, s3error:
++            except S3ResponseError as s3error:
+                 s3error_string = '%s' % s3error
+                 if s3error_string.find('200') < 0:
+-                    print >> sys.stderr, s3error_string
+-                    print >> sys.stderr, 'unable to download manifest %s' % manifest
++                    print(s3error_string, file=sys.stderr)
++                    print('unable to download manifest %s' % manifest, file=sys.stderr)
+                     if os.path.exists(manifest_filename):
+                         os.remove(manifest_filename)
+                     return False
+@@ -136,11 +136,11 @@
+                 k.key = part
+                 try:
+                     k.delete()
+-                except S3ResponseError, s3error:
++                except S3ResponseError as s3error:
+                     s3error_string = '%s' % s3error
+                     if s3error_string.find('200') < 0:
+-                        print >> sys.stderr, s3error_string
+-                        print >> sys.stderr, 'unable to delete part %s' % part
++                        print(s3error_string, file=sys.stderr)
++                        print('unable to delete part %s' % part, file=sys.stderr)
+                         sys.exit()
+ 
+ 
+@@ -150,24 +150,24 @@
+             k.key = manifest
+             try:
+                 k.delete()
+-            except Exception, s3error:
++            except Exception as s3error:
+                 s3error_string = '%s' % s3error
+                 if s3error_string.find('200') < 0:
+-                    print >> sys.stderr, s3error_string
+-                    print >> sys.stderr, 'unable to delete manifest %s' % manifest
++                    print(s3error_string, file=sys.stderr)
++                    print('unable to delete manifest %s' % manifest, file=sys.stderr)
+                     try:
+                         bucket = self.ensure_bucket(bucket_name)
+-                    except ConnectionFailed, e:
+-                        print >> sys.stderr, e.message
++                    except ConnectionFailed as e:
++                        print(e.message, file=sys.stderr)
+                         sys.exit(1)
+         if clear:
+             try:
+                 bucket.delete()
+-            except Exception, s3error:
++            except Exception as s3error:
+                 s3error_string = '%s' % s3error
+                 if s3error_string.find('200') < 0:
+-                    print >> sys.stderr, s3error_string
+-                    print >> sys.stderr, 'unable to delete bucket %s' % bucket.name
++                    print(s3error_string, file=sys.stderr)
++                    print('unable to delete bucket %s' % bucket.name, file=sys.stderr)
+ 
+     def remove_manifests(self, manifests, directory):
+         for manifest in manifests:
+@@ -179,15 +179,15 @@
+         directory = os.path.abspath('/tmp')
+ 
+         if not self.manifest_path and not self.prefix:
+-            print >> sys.stderr, 'Neither a manifestpath nor a prefix was specified.'
+-            print >> sys.stderr, 'All bundles in bucket', self.bucket, 'will be deleted.'
+-            print >> sys.stderr, ('If this is not what you want, press Ctrl+C in the next '
+-                   '10 seconds'),
++            print('Neither a manifestpath nor a prefix was specified.', file=sys.stderr)
++            print('All bundles in bucket', self.bucket, 'will be deleted.', file=sys.stderr)
++            print(('If this is not what you want, press Ctrl+C in the next '
++                   '10 seconds'), end=' ', file=sys.stderr)
+             for __ in range(10):
+                 sys.stdout.write('.')
+                 sys.stdout.flush()
+                 time.sleep(1)
+-            print
++            print()
+ 
+         bucket_instance = self.ensure_bucket(self.bucket)
+         manifests = None
+--- ./commands/euca/deletegroup.py	(original)
++++ ./commands/euca/deletegroup.py	(refactored)
+@@ -49,6 +49,6 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'GROUP\t%s' % self.group_name
++            print('GROUP\t%s' % self.group_name)
+         else:
+             self.error_exit()
+--- ./commands/euca/deletekeypair.py	(original)
++++ ./commands/euca/deletekeypair.py	(refactored)
+@@ -49,6 +49,6 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'KEYPAIR\t%s' % self.keypair_name
++            print('KEYPAIR\t%s' % self.keypair_name)
+         else:
+             self.error_exit()
+--- ./commands/euca/deletesnapshot.py	(original)
++++ ./commands/euca/deletesnapshot.py	(refactored)
+@@ -49,7 +49,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'SNAPSHOT\t%s' % self.snapshot_id
++            print('SNAPSHOT\t%s' % self.snapshot_id)
+         else:
+             self.error_exit()
+ 
+--- ./commands/euca/deletevolume.py	(original)
++++ ./commands/euca/deletevolume.py	(refactored)
+@@ -48,7 +48,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-                print 'VOLUME\t%s' % self.volume_id
++                print('VOLUME\t%s' % self.volume_id)
+         else:
+             self.error_exit()
+ 
+--- ./commands/euca/deregister.py	(original)
++++ ./commands/euca/deregister.py	(refactored)
+@@ -48,7 +48,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'IMAGE\t%s' % self.image_id
++            print('IMAGE\t%s' % self.image_id)
+         else:
+             self.error_exit()
+ 
+--- ./commands/euca/describeaddresses.py	(original)
++++ ./commands/euca/describeaddresses.py	(refactored)
+@@ -51,7 +51,7 @@
+             address_string = '%s\t%s\t%s' % (address.public_ip,
+                                              address.instance_id or '',
+                                              domain)
+-            print 'ADDRESS\t%s' % address_string
++            print('ADDRESS\t%s' % address_string)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/describeavailabilityzones.py	(original)
++++ ./commands/euca/describeavailabilityzones.py	(refactored)
+@@ -52,7 +52,7 @@
+     def display_zones(self, zones):
+         for zone in zones:
+             zone_string = '%s\t%s' % (zone.name, zone.state)
+-            print 'AVAILABILITYZONE\t%s' % zone_string
++            print('AVAILABILITYZONE\t%s' % zone_string)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/describebundletasks.py	(original)
++++ ./commands/euca/describebundletasks.py	(refactored)
+@@ -74,7 +74,7 @@
+                 bundle.state,
+                 bundle.start_time,
+                 bundle.update_time)
+-            print 'BUNDLE\t%s' % bundle_string
++            print('BUNDLE\t%s' % bundle_string)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/describegroups.py	(original)
++++ ./commands/euca/describegroups.py	(refactored)
+@@ -75,7 +75,7 @@
+             else:
+                 group_string = '%s\t%s\t%s' % (group.owner_id,
+                                                group.name, group.description)
+-            print 'GROUP\t%s' % group_string
++            print('GROUP\t%s' % group_string)
+             for rule in group.rules:
+                 permission_string = '%s\t%s\tALLOWS\t%s\t%s\t%s' \
+                     % (group.owner_id, group.name, rule.ip_protocol,
+@@ -90,7 +90,7 @@
+                     else:
+                         grant_string += '\tCIDR\t%s' % grant.cidr_ip
+                     permission_string += grant_string
+-                    print 'PERMISSION\t%s' % permission_string
++                    print('PERMISSION\t%s' % permission_string)
+                     
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/describeimageattribute.py	(original)
++++ ./commands/euca/describeimageattribute.py	(refactored)
+@@ -62,32 +62,32 @@
+     
+     def display_image_attribute(self, image_id, image_attribute):
+         if image_attribute.name == 'launch_permission':
+-            if image_attribute.attrs.has_key('groups'):
++            if 'groups' in image_attribute.attrs:
+                 for group in image_attribute.attrs['groups']:
+-                    print 'launchPermission\t%s\tgroup\t%s' \
+-                        % (image_attribute.image_id, group)
+-            if image_attribute.attrs.has_key('user_ids'):
++                    print('launchPermission\t%s\tgroup\t%s' \
++                        % (image_attribute.image_id, group))
++            if 'user_ids' in image_attribute.attrs:
+                 for userid in image_attribute.attrs['user_ids']:
+-                    print 'launchPermission\t%s\tuserId\t%s' \
+-                        % (image_attribute.image_id, userid)
+-        if image_attribute.attrs.has_key('product_codes'):
++                    print('launchPermission\t%s\tuserId\t%s' \
++                        % (image_attribute.image_id, userid))
++        if 'product_codes' in image_attribute.attrs:
+             for product_code in image_attribute.attrs['product_codes']:
+-                print 'productCodes\t%s\tproductCode\t%s' \
+-                    % (image_attribute.image_id, product_code)
++                print('productCodes\t%s\tproductCode\t%s' \
++                    % (image_attribute.image_id, product_code))
+         if image_attribute.kernel is not None:
+-            print 'kernel\t%s\t\t%s' % (image_attribute.image_id,
+-                                        getattr(image_attribute, 'value', ""))
++            print('kernel\t%s\t\t%s' % (image_attribute.image_id,
++                                        getattr(image_attribute, 'value', "")))
+         if image_attribute.ramdisk is not None:
+-            print 'ramdisk\t%s\t\t%s' % (image_attribute.image_id,
+-                                         getattr(image_attribute, 'value', ""))
+-        if image_attribute.attrs.has_key('block_device_mapping'):
++            print('ramdisk\t%s\t\t%s' % (image_attribute.image_id,
++                                         getattr(image_attribute, 'value', "")))
++        if 'block_device_mapping' in image_attribute.attrs:
+             block_device_mapping = \
+                 image_attribute.attrs['block_device_mapping']
+             for dev_name in block_device_mapping:
+-                print 'blockDeviceMapping\t%s\tblockDeviceMap\t%s: %s' \
++                print('blockDeviceMapping\t%s\tblockDeviceMap\t%s: %s' \
+                     % (image_id, dev_name,
+                        (block_device_mapping[dev_name].ephemeral_name or
+-                        block_device_mapping[dev_name].snapshot_id))
++                        block_device_mapping[dev_name].snapshot_id)))
+  
+     def main(self):
+         attribute = None
+--- ./commands/euca/describeimages.py	(original)
++++ ./commands/euca/describeimages.py	(refactored)
+@@ -137,7 +137,7 @@
+                       image.root_device_type]:
+                 image_string += '\t%s' % (('' if i == None else i))
+ 
+-            print 'IMAGE\t%s' % image_string
++            print('IMAGE\t%s' % image_string)
+             if image.block_device_mapping:
+                 block_dev_mapping = image.block_device_mapping
+                 if image.root_device_type == 'ebs':
+@@ -145,11 +145,11 @@
+                         % (block_dev_mapping.current_name,
+                            block_dev_mapping.current_value.snapshot_id,
+                            block_dev_mapping.current_value.size)
+-                    print 'BLOCKDEVICEMAPPING\t%s' % block_dev_string
++                    print('BLOCKDEVICEMAPPING\t%s' % block_dev_string)
+             if hasattr(image, 'tags') and isinstance(image.tags, dict):
+                 for tag in image.tags:
+-                    print '\t'.join(('TAG', 'image', image.id, tag,
+-                                     image.tags[tag]))
++                    print('\t'.join(('TAG', 'image', image.id, tag,
++                                     image.tags[tag])))
+ 
+     def main(self):
+         if self.all and (self.owner or self.executable_by or self.image):
+--- ./commands/euca/describeinstances.py	(original)
++++ ./commands/euca/describeinstances.py	(refactored)
+@@ -158,7 +158,7 @@
+             for group in reservation.groups:
+                 reservation_string += '%s%s' % (group_delim, group.id)
+                 group_delim = ', '
+-            print 'RESERVATION\t%s' % reservation_string
++            print('RESERVATION\t%s' % reservation_string)
+             euca2ools.utils.print_instances(instances)
+ 
+     def main(self):
+--- ./commands/euca/describekeypairs.py	(original)
++++ ./commands/euca/describekeypairs.py	(refactored)
+@@ -48,7 +48,7 @@
+     def display_keypairs(self, keypairs):
+         for keypair in keypairs:
+             keypair_string = '%s\t%s' % (keypair.name, keypair.fingerprint)
+-            print 'KEYPAIR\t%s' % keypair_string
++            print('KEYPAIR\t%s' % keypair_string)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/describeregions.py	(original)
++++ ./commands/euca/describeregions.py	(refactored)
+@@ -49,7 +49,7 @@
+     def display_regions(self, regions):
+         for region in regions:
+             region_string = '%s\t%s' % (region.name, region.endpoint)
+-            print 'REGION\t%s' % region_string
++            print('REGION\t%s' % region_string)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/describesnapshots.py	(original)
++++ ./commands/euca/describesnapshots.py	(refactored)
+@@ -89,11 +89,11 @@
+             for member in members:
+                 val = getattr(snapshot, member, "")
+                 items.append(str(val))
+-            print "SNAPSHOT\t%s" % '\t'.join(items)
++            print("SNAPSHOT\t%s" % '\t'.join(items))
+             if hasattr(snapshot, 'tags') and isinstance(snapshot.tags, dict):
+                 for tag in snapshot.tags:
+-                    print '\t'.join(('TAG', 'snapshot', snapshot.id, tag,
+-                                     snapshot.tags[tag]))
++                    print('\t'.join(('TAG', 'snapshot', snapshot.id, tag,
++                                     snapshot.tags[tag])))
+ 
+ 
+     def main(self):
+--- ./commands/euca/describetags.py	(original)
++++ ./commands/euca/describetags.py	(refactored)
+@@ -54,7 +54,7 @@
+         for tag in tags:
+             tag_string = '%s\t%s\t%s\t%s' % (tag.res_id, tag.res_type,
+                                              tag.name, tag.value)
+-            print 'TAG\t%s' % tag_string
++            print('TAG\t%s' % tag_string)
+             
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/describevolumes.py	(original)
++++ ./commands/euca/describevolumes.py	(refactored)
+@@ -92,18 +92,18 @@
+ 
+             volume_string += '\t%s\t%s' % (volume.status,
+                     volume.create_time)
+-            print 'VOLUME\t%s' % volume_string
++            print('VOLUME\t%s' % volume_string)
+             if volume.status == 'in-use':
+                 attachment_string = '%s\t%s\t%s\t%s\t%s' % (volume.id,
+                         volume.attach_data.instance_id,
+                         volume.attach_data.device,
+                         volume.attach_data.status,
+                         volume.attach_data.attach_time)
+-                print 'ATTACHMENT\t%s' % attachment_string
++                print('ATTACHMENT\t%s' % attachment_string)
+             if hasattr(volume, 'tags') and isinstance(volume.tags, dict):
+                 for tag in volume.tags:
+-                    print '\t'.join(('TAG', 'volume', volume.id, tag,
+-                                     volume.tags[tag]))
++                    print('\t'.join(('TAG', 'volume', volume.id, tag,
++                                     volume.tags[tag])))
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/detachvolume.py	(original)
++++ ./commands/euca/detachvolume.py	(refactored)
+@@ -63,7 +63,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'VOLUME\t%s' % self.volume_id
++            print('VOLUME\t%s' % self.volume_id)
+         else:
+             self.error_exit()
+ 
+--- ./commands/euca/disassociateaddress.py	(original)
++++ ./commands/euca/disassociateaddress.py	(refactored)
+@@ -49,7 +49,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'ADDRESS\t%s' % self.ip
++            print('ADDRESS\t%s' % self.ip)
+         else:
+             self.error_exit()
+ 
+--- ./commands/euca/downloadbundle.py	(original)
++++ ./commands/euca/downloadbundle.py	(refactored)
+@@ -62,8 +62,8 @@
+         s3conn = self.make_connection_cli('s3')
+         try:
+             bucket_instance = s3conn.get_bucket(bucket)
+-        except S3ResponseError, s3error:
+-            print >> sys.stderr, 'Unable to get bucket %s' % bucket
++        except S3ResponseError as s3error:
++            print('Unable to get bucket %s' % bucket, file=sys.stderr)
+             sys.exit()
+         return bucket_instance
+ 
+@@ -99,7 +99,7 @@
+         for manifest in manifests:
+             k = Key(bucket)
+             k.key = manifest
+-            print 'Downloading', manifest
++            print('Downloading', manifest)
+             manifest_file = open(os.path.join(directory, manifest), 'wb')
+             k.get_contents_to_file(manifest_file)
+             manifest_file.close()
+@@ -111,7 +111,7 @@
+             for part in parts:
+                 k = Key(bucket)
+                 k.key = part
+-                print 'Downloading', part
++                print('Downloading', part)
+                 part_file = open(os.path.join(directory, part), 'wb')
+                 k.get_contents_to_file(part_file)
+                 part_file.close()
+--- ./commands/euca/getconsoleoutput.py	(original)
++++ ./commands/euca/getconsoleoutput.py	(refactored)
+@@ -46,8 +46,8 @@
+                      characters''')]
+ 
+     def display_console_output(self, console_output):
+-        print console_output.instance_id
+-        print console_output.timestamp
++        print(console_output.instance_id)
++        print(console_output.timestamp)
+         output = console_output.output
+         if not self.raw:
+             # Escape control characters
+@@ -57,7 +57,7 @@
+                 # Small assumption:  we aren't translating ' or "
+                 output = output.replace(chr(esc_ord),
+                                         repr(chr(esc_ord)).strip('\'"'))
+-        print output
++        print(output)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/getpassword.py	(original)
++++ ./commands/euca/getpassword.py	(refactored)
+@@ -68,6 +68,6 @@
+     def main_cli(self):
+         pw = self.main()
+         if pw:
+-            print pw
++            print(pw)
+         else:
+             sys.exit('no password found for this instance')
+--- ./commands/euca/getpassworddata.py	(original)
++++ ./commands/euca/getpassworddata.py	(refactored)
+@@ -47,5 +47,5 @@
+                                    instance_id=self.instance_id)
+ 
+     def main_cli(self):
+-        print self.main()
++        print(self.main())
+ 
+--- ./commands/euca/importkeypair.py	(original)
++++ ./commands/euca/importkeypair.py	(refactored)
+@@ -58,5 +58,5 @@
+     def main_cli(self):
+         keypair = self.main()
+         if keypair:
+-            print 'KEYPAIR\t%s\t%s' % (keypair.name, keypair.fingerprint)
++            print('KEYPAIR\t%s\t%s' % (keypair.name, keypair.fingerprint))
+ 
+--- ./commands/euca/modifyimageattribute.py	(original)
++++ ./commands/euca/modifyimageattribute.py	(refactored)
+@@ -58,31 +58,31 @@
+     
+     def display_image_attribute(self, image_id, image_attribute):
+         if image_attribute.name == 'launch_permission':
+-            if image_attribute.attrs.has_key('groups'):
++            if 'groups' in image_attribute.attrs:
+                 for group in image_attribute.attrs['groups']:
+-                    print 'launchPermission\t%s\tgroup\t%s' \
+-                        % (image_attribute.image_id, group)
+-            if image_attribute.attrs.has_key('user_ids'):
++                    print('launchPermission\t%s\tgroup\t%s' \
++                        % (image_attribute.image_id, group))
++            if 'user_ids' in image_attribute.attrs:
+                 for userid in image_attribute.attrs['user_ids']:
+-                    print 'launchPermission\t%s\tuserId\t%s' \
+-                        % (image_attribute.image_id, userid)
+-        if image_attribute.attrs.has_key('product_codes'):
++                    print('launchPermission\t%s\tuserId\t%s' \
++                        % (image_attribute.image_id, userid))
++        if 'product_codes' in image_attribute.attrs:
+             for product_code in image_attribute.attrs['product_codes']:
+-                print 'productCodes\t%s\tproductCode\t%s' \
+-                    % (image_attribute.image_id, product_code)
++                print('productCodes\t%s\tproductCode\t%s' \
++                    % (image_attribute.image_id, product_code))
+         if image_attribute.kernel is not None:
+-            print 'kernel\t%s\t\t%s' % (image_attribute.image_id,
+-                                        getattr(image_attribute, 'value', ""))
++            print('kernel\t%s\t\t%s' % (image_attribute.image_id,
++                                        getattr(image_attribute, 'value', "")))
+         if image_attribute.ramdisk is not None:
+-            print 'ramdisk\t%s\t\t%s' % (image_attribute.image_id,
+-                                         getattr(image_attribute, 'value', ""))
+-        if image_attribute.attrs.has_key('block_device_mapping'):
++            print('ramdisk\t%s\t\t%s' % (image_attribute.image_id,
++                                         getattr(image_attribute, 'value', "")))
++        if 'block_device_mapping' in image_attribute.attrs:
+             block_device_mapping = \
+                 image_attribute.attrs['block_device_mapping']
+             for dev_name in block_device_mapping:
+-                print 'blockDeviceMapping\t%s\tblockDeviceMap\t%s: %s' \
++                print('blockDeviceMapping\t%s\tblockDeviceMap\t%s: %s' \
+                     % (image_id, dev_name,
+-                       block_device_mapping[dev_name])
++                       block_device_mapping[dev_name]))
+ 
+     def main(self):
+         users = []
+@@ -119,5 +119,5 @@
+ 
+     def main_cli(self):
+         self.main()
+-        print 'IMAGE\t%s' % self.image_id
++        print('IMAGE\t%s' % self.image_id)
+ 
+--- ./commands/euca/monitorinstances.py	(original)
++++ ./commands/euca/monitorinstances.py	(refactored)
+@@ -43,7 +43,7 @@
+ 
+     def display_monitor_info(self, info):
+         for item in info:
+-            print '%s\t%s' % (item.id, item.state)
++            print('%s\t%s' % (item.id, item.state))
+             
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/register.py	(original)
++++ ./commands/euca/register.py	(refactored)
+@@ -109,4 +109,4 @@
+     def main_cli(self):
+         image_id = self.main()
+         if image_id:
+-            print 'IMAGE\t%s' % image_id
++            print('IMAGE\t%s' % image_id)
+--- ./commands/euca/releaseaddress.py	(original)
++++ ./commands/euca/releaseaddress.py	(refactored)
+@@ -49,7 +49,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'ADDRESS\t%s' % (self.ip)
++            print('ADDRESS\t%s' % (self.ip))
+         else:
+             self.error_exit()
+ 
+--- ./commands/euca/resetimageattribute.py	(original)
++++ ./commands/euca/resetimageattribute.py	(refactored)
+@@ -65,5 +65,5 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'IMAGE\t%s' % self.image_id
++            print('IMAGE\t%s' % self.image_id)
+         
+--- ./commands/euca/revoke.py	(original)
++++ ./commands/euca/revoke.py	(refactored)
+@@ -102,7 +102,7 @@
+     def main_cli(self):
+         status = self.main()
+         if status:
+-            print 'GROUP\t%s' % self.group_name
++            print('GROUP\t%s' % self.group_name)
+             permission_string = 'PERMISSION\t%s\tALLOWS' % self.group_name
+             if self.protocol:
+                 permission_string += '\t%s' % self.protocol
+@@ -117,7 +117,7 @@
+                 permission_string += '\tGRPNAME\t%s' % self.source_group
+             if self.source_subnet:
+                 permission_string += '\tFROM\tCIDR\t%s' % self.source_subnet
+-            print permission_string
++            print(permission_string)
+         else:
+             self.error_exit()
+             
+--- ./commands/euca/runinstances.py	(original)
++++ ./commands/euca/runinstances.py	(refactored)
+@@ -101,7 +101,7 @@
+         for group in reservation.groups:
+             reservation_string += '%s%s' % (group_delim, group.id)
+             group_delim = ', '
+-        print 'RESERVATION\t%s' % reservation_string
++        print('RESERVATION\t%s' % reservation_string)
+         euca2ools.utils.print_instances(reservation.instances)
+ 
+     def read_user_data(self, user_data_filename):
+--- ./commands/euca/startinstances.py	(original)
++++ ./commands/euca/startinstances.py	(refactored)
+@@ -46,11 +46,11 @@
+         for instance in instances:
+             if 'InstanceState' in dir(boto.ec2.instance):
+                 # See https://eucalyptus.atlassian.net/browse/TOOLS-109
+-                print 'INSTANCE\t%s\t%s\t%s' % (instance.id,
++                print('INSTANCE\t%s\t%s\t%s' % (instance.id,
+                                                 instance.previous_state,
+-                                                instance.state)
++                                                instance.state))
+             else:
+-                print 'INSTANCE\t%s' % instance.id
++                print('INSTANCE\t%s' % instance.id)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/stopinstances.py	(original)
++++ ./commands/euca/stopinstances.py	(refactored)
+@@ -49,11 +49,11 @@
+         for instance in instances:
+             if 'InstanceState' in dir(boto.ec2.instance):
+                 # See https://eucalyptus.atlassian.net/browse/TOOLS-109
+-                print 'INSTANCE\t%s\t%s\t%s' % (instance.id,
++                print('INSTANCE\t%s\t%s\t%s' % (instance.id,
+                                                 instance.previous_state,
+-                                                instance.state)
++                                                instance.state))
+             else:
+-                print 'INSTANCE\t%s' % instance.id
++                print('INSTANCE\t%s' % instance.id)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/terminateinstances.py	(original)
++++ ./commands/euca/terminateinstances.py	(refactored)
+@@ -46,11 +46,11 @@
+         for instance in instances:
+             if 'InstanceState' in dir(boto.ec2.instance):
+                 # See https://eucalyptus.atlassian.net/browse/TOOLS-109
+-                print 'INSTANCE\t%s\t%s\t%s' % (instance.id,
++                print('INSTANCE\t%s\t%s\t%s' % (instance.id,
+                                                 instance.previous_state,
+-                                                instance.state)
++                                                instance.state))
+             else:
+-                print 'INSTANCE\t%s' % instance.id
++                print('INSTANCE\t%s' % instance.id)
+ 
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/unbundle.py	(original)
++++ ./commands/euca/unbundle.py	(refactored)
+@@ -74,11 +74,11 @@
+             bundler.parse_manifest(self.manifest_path)
+         image = bundler.assemble_parts(self.source_dir, self.destination_dir,
+                                        self.manifest_path, parts)
+-        print 'Decrypting image'
++        print('Decrypting image')
+         decrypted_image = bundler.decrypt_image(image, encrypted_key,
+                                                 encrypted_iv, self.private_key_path)
+         os.remove(image)
+-        print 'Uncompressing image'
++        print('Uncompressing image')
+         try:
+             bundler.untarzip_image(self.destination_dir, decrypted_image)
+         except NotFoundError:
+--- ./commands/euca/unmonitorinstances.py	(original)
++++ ./commands/euca/unmonitorinstances.py	(refactored)
+@@ -43,7 +43,7 @@
+ 
+     def display_monitor_info(self, info):
+         for item in info:
+-            print '%s\t%s' % (item.id, item.state)
++            print('%s\t%s' % (item.id, item.state))
+             
+     def main(self):
+         conn = self.make_connection_cli()
+--- ./commands/euca/uploadbundle.py	(original)
++++ ./commands/euca/uploadbundle.py	(refactored)
+@@ -76,17 +76,17 @@
+         bucket_instance = None
+         s3conn = self.make_connection_cli('s3')
+         try:
+-            print 'Checking bucket:', self.bucket
++            print('Checking bucket:', self.bucket)
+             bucket_instance = s3conn.get_bucket(self.bucket)
+             if location:
+                 if location != bucket_instance.get_location():
+                     msg = 'Supplied location does not match bucket location'
+                     self.display_error_and_exit(msg)
+-        except S3ResponseError, s3error:
++        except S3ResponseError as s3error:
+             s3error_string = '%s' % s3error
+             if s3error_string.find('404') >= 0:
+                 try:
+-                    print 'Creating bucket:', self.bucket
++                    print('Creating bucket:', self.bucket)
+                     bucket_instance = s3conn.create_bucket(self.bucket,
+                                                            policy=acl,
+                                                            location=location)
+@@ -115,7 +115,7 @@
+     def upload_manifest(self, bucket_instance, manifest_filename,
+                         canned_acl=None, upload_policy=None,
+                         upload_policy_signature=None):
+-        print 'Uploading manifest file'
++        print('Uploading manifest file')
+         k = Key(bucket_instance)
+         k.key = self.get_relative_filename(manifest_filename)
+         manifest_file = open(manifest_filename, 'rb')
+@@ -128,7 +128,7 @@
+         try:
+             k.set_contents_from_file(manifest_file, policy=canned_acl,
+                                      headers=headers)
+-        except S3ResponseError, s3error:
++        except S3ResponseError as s3error:
+             s3error_string = '%s' % s3error
+             if s3error_string.find('403') >= 0:
+                 msg = 'Permission denied while writing:', k.key
+@@ -154,14 +154,14 @@
+             if part == part_to_start_from:
+                 okay_to_upload = True
+             if okay_to_upload:
+-                print 'Uploading part:', part
++                print('Uploading part:', part)
+                 k = Key(bucket_instance)
+                 k.key = part
+                 part_file = open(os.path.join(directory, part), 'rb')
+                 try:
+                     k.set_contents_from_file(part_file, policy=canned_acl,
+                                              headers=headers)
+-                except S3ResponseError, s3error:
++                except S3ResponseError as s3error:
+                     s3error_string = '%s' % s3error
+                     if s3error_string.find('403') >= 0:
+                         msg = 'Permission denied while writing:', k.key
+@@ -180,8 +180,8 @@
+                                  self.canned_acl)
+         self.upload_parts(bucket_instance, self.bundle_path,
+                           parts, self.part, self.canned_acl)
+-        print 'Uploaded image as %s/%s' % (self.bucket,
+-                self.get_relative_filename(self.manifest_path))
++        print('Uploaded image as %s/%s' % (self.bucket,
++                self.get_relative_filename(self.manifest_path)))
+ 
+     def main_cli(self):
+         self.main()
+--- ./commands/eustore/__init__.py	(original)
++++ ./commands/eustore/__init__.py	(refactored)
+@@ -54,7 +54,7 @@
+     def __init__(self, maxVal):
+         self.maxVal=maxVal
+         self.currVal=0
+-        print "0-----1-----2-----3-----4-----5-----6-----7-----8-----9-----10"
++        print("0-----1-----2-----3-----4-----5-----6-----7-----8-----9-----10")
+         self.progShowing=0
+ 
+     def update(self, val):
+--- ./commands/eustore/describeimages.py	(original)
++++ ./commands/eustore/describeimages.py	(refactored)
+@@ -33,7 +33,7 @@
+ # Author: David Kavanagh david.kavanagh@eucalyptus.com
+ 
+ import os
+-import urllib2
++import urllib.request, urllib.error, urllib.parse
+ from boto.roboto.param import Param
+ from boto.roboto.awsqueryrequest import AWSQueryRequest
+ import euca2ools.commands.eustore
+@@ -67,26 +67,26 @@
+ 
+     def main(self):
+         self.eustore_url = self.ServiceClass.StoreBaseURL
+-        if os.environ.has_key('EUSTORE_URL'):
++        if 'EUSTORE_URL' in os.environ:
+             self.eustore_url = os.environ['EUSTORE_URL']
+         catURL = self.eustore_url + "catalog"
+-        req = urllib2.Request(catURL, headers=self.ServiceClass.RequestHeaders)
+-        response = urllib2.urlopen(req).read()
++        req = urllib.request.Request(catURL, headers=self.ServiceClass.RequestHeaders)
++        response = urllib.request.urlopen(req).read()
+         parsed_cat = json.loads(response)
+         if len(parsed_cat) > 0:
+             image_list = parsed_cat['images']
+             for image in image_list:
+-                print self.fmtCol(image['name'],11)+ \
++                print(self.fmtCol(image['name'],11)+ \
+                       self.fmtCol(image['os'],12)+ \
+                       self.fmtCol(image['architecture'],8)+ \
+                       self.fmtCol(image['version'],15)+ \
+                       self.fmtCol(', '.join(image['hypervisors-supported']),18)+ \
+-                      image['description']
++                      image['description'])
+                 if self.cli_options.verbose:
+-                    print "     "+self.fmtCol(image['date'],20)+ \
++                    print("     "+self.fmtCol(image['date'],20)+ \
+                           self.fmtCol(image['stamp'],12)+ \
+                           self.fmtCol(image['recipe'],23)+ \
+-                          image['contact']
++                          image['contact'])
+ 
+     def main_cli(self):
+         euca2ools.utils.print_version_if_necessary()
+--- ./commands/eustore/installimage.py	(original)
++++ ./commands/eustore/installimage.py	(refactored)
+@@ -40,7 +40,7 @@
+ import zlib
+ import shutil
+ import tempfile
+-import urllib2
++import urllib.request, urllib.error, urllib.parse
+ import boto
+ from boto.roboto.param import Param
+ from boto.roboto.awsqueryrequest import AWSQueryRequest
+@@ -163,10 +163,10 @@
+ 
+     def promptReplace(self, type, name):
+         if self.cli_options.yes:
+-            print type+": "+name+" is already installed on the cloud, skipping installation of another one."
++            print(type+": "+name+" is already installed on the cloud, skipping installation of another one.")
+             return True
+         else:
+-            answer = raw_input(type + ": " + name + " is already installed on this cloud. Would you like to use it instead? (y/N)")
++            answer = input(type + ": " + name + " is already installed on this cloud. Would you like to use it instead? (y/N)")
+             if (answer=='y' or answer=='Y'):
+                 return True
+             return False
+@@ -229,7 +229,7 @@
+         obj.part=None
+         obj.main()
+         to_register = obj.bucket+'/'+self.get_relative_filename(obj.manifest_path)
+-        print to_register
++        print(to_register)
+         obj = LocalRegister()
+         obj.image_location=to_register
+         obj.name=name
+@@ -243,20 +243,20 @@
+         return obj.main()
+ 
+     def bundleAll(self, file, prefix, description, arch):
+-        print "Unbundling image"
++        print("Unbundling image")
+         bundler = euca2ools.bundler.Bundler(self)
+         try:
+             names = bundler.untarzip_image(self.destination, file)
+         except OSError:
+-            print >> sys.stderr, "Error: cannot unbundle image, possibly corrupted file"
++            print("Error: cannot unbundle image, possibly corrupted file", file=sys.stderr)
+             sys.exit(-1)
+         except IOError:
+-            print >> sys.stderr, "Error: cannot unbundle image, possibly corrupted file"
++            print("Error: cannot unbundle image, possibly corrupted file", file=sys.stderr)
+             sys.exit(-1)
+         kernel_dir=None
+         if not(self.cli_options.kernel_type==None):
+             kernel_dir = self.cli_options.kernel_type+'-kernel'
+-            print "going to look for kernel dir : "+kernel_dir
++            print("going to look for kernel dir : "+kernel_dir)
+         #iterate, and install kernel/ramdisk first, store the ids
+         kernel_id=self.cli_options.kernel
+         ramdisk_id=self.cli_options.ramdisk
+@@ -272,24 +272,24 @@
+                         if not name.startswith('.'):
+                             # Note that vmlinuz is not always at the beginning of the filename
+                             if name.find('vmlinu') != -1:
+-                                print "Bundling/uploading kernel"
++                                print("Bundling/uploading kernel")
+                                 if prefix:
+                                     name = prefix+name
+                                 kernel_id = self.bundleFile(path, name, description, arch, 'true', None)
+                                 kernel_found = True
+-                                print kernel_id
++                                print(kernel_id)
+                             elif re.match(".*(initr(d|amfs)|loader).*", name):
+-                                print "Bundling/uploading ramdisk"
++                                print("Bundling/uploading ramdisk")
+                                 if prefix:
+                                     name = prefix+name
+                                 ramdisk_id = self.bundleFile(path, name, description, arch, None, 'true')
+-                                print ramdisk_id
++                                print(ramdisk_id)
+                 if not(kernel_found):
+                     if not(kernel_dir):
+-                        print >> sys.stderr, "Error: couldn't find kernel. Check your parameters or specify an existing kernel/ramdisk"
++                        print("Error: couldn't find kernel. Check your parameters or specify an existing kernel/ramdisk", file=sys.stderr)
+                         sys.exit(-1);
+                     elif i==0:
+-                        print >> sys.stderr, "Error: couldn't find kernel. Check your parameters or specify an existing kernel/ramdisk"
++                        print("Error: couldn't find kernel. Check your parameters or specify an existing kernel/ramdisk", file=sys.stderr)
+                         sys.exit(-1);
+                 else:
+                     break
+@@ -299,7 +299,7 @@
+             name = os.path.basename(path)
+             if not name.startswith('.'):
+                 if name.endswith('.img'):
+-                    print "Bundling/uploading image"
++                    print("Bundling/uploading image")
+                     if prefix:
+                         name = prefix
+                     else:
+@@ -319,30 +319,30 @@
+ 
+         # tarball and image option are mutually exclusive
+         if (not(self.cli_options.image_name) and not(self.cli_options.tarball)):
+-            print >> sys.stderr, "Error: one of -i or -t must be specified"
++            print("Error: one of -i or -t must be specified", file=sys.stderr)
+             sys.exit(-1)
+ 
+         if (self.cli_options.image_name and self.cli_options.tarball):
+-            print >> sys.stderr, "Error: -i and -t cannot be specified together"
++            print("Error: -i and -t cannot be specified together", file=sys.stderr)
+             sys.exit(-1)
+ 
+         if (self.cli_options.tarball and \
+             (not(self.cli_options.description) or not(self.cli_options.architecture))):
+-            print >> sys.stderr, "Error: when -t is specified, -s and -a are required"
++            print("Error: when -t is specified, -s and -a are required", file=sys.stderr)
+             sys.exit(-1)
+ 
+         if (self.cli_options.architecture and \
+             not(self.cli_options.architecture == 'i386' or self.cli_options.architecture == 'x86_64')):
+-            print >> sys.stderr, "Error: architecture must be either 'i386' or 'x86_64'"
++            print("Error: architecture must be either 'i386' or 'x86_64'", file=sys.stderr)
+             sys.exit(-1)
+ 
+         if (self.cli_options.kernel and not(self.cli_options.ramdisk)) or \
+            (not(self.cli_options.kernel) and self.cli_options.ramdisk):
+-            print >> sys.stderr, "Error: kernel and ramdisk must both be overridden"
++            print("Error: kernel and ramdisk must both be overridden", file=sys.stderr)
+             sys.exit(-1)
+ 
+         if (self.cli_options.architecture and self.cli_options.image_name):
+-            print >> sys.stderr, "Warning: you may be overriding the default architecture of this image!"
++            print("Warning: you may be overriding the default architecture of this image!", file=sys.stderr)
+ 
+ 
+         euare_svc = EuareService()
+@@ -353,7 +353,7 @@
+                     is_secure=euare_svc.args['is_secure'])
+         userinfo  = conn.get_user().arn.split(':')
+         if not(userinfo[4]=='eucalyptus') and not(self.cli_options.kernel):
+-            print >> sys.stderr, "Error: must be cloud admin to upload kernel/ramdisk. try specifying existing ones with --kernel and --ramdisk"
++            print("Error: must be cloud admin to upload kernel/ramdisk. try specifying existing ones with --kernel and --ramdisk", file=sys.stderr)
+             sys.exit(-1)
+         self.eustore_url = self.ServiceClass.StoreBaseURL
+ 
+@@ -365,7 +365,7 @@
+                         
+         self.ImageList = ec2_conn.get_all_images()
+ 
+-        if os.environ.has_key('EUSTORE_URL'):
++        if 'EUSTORE_URL' in os.environ:
+             self.eustore_url = os.environ['EUSTORE_URL']
+ 
+         self.destination = "/tmp/"
+@@ -378,11 +378,11 @@
+ 
+         if self.cli_options.tarball:
+             # local tarball path instead
+-            print "Installed image: "+self.bundleAll(self.cli_options.tarball, self.cli_options.prefix, self.cli_options.description, self.cli_options.architecture)
++            print("Installed image: "+self.bundleAll(self.cli_options.tarball, self.cli_options.prefix, self.cli_options.description, self.cli_options.architecture))
+         else:
+             catURL = self.eustore_url + "catalog"
+-            req = urllib2.Request(catURL, headers=self.ServiceClass.RequestHeaders)
+-            response = urllib2.urlopen(req).read()
++            req = urllib.request.Request(catURL, headers=self.ServiceClass.RequestHeaders)
++            response = urllib.request.urlopen(req).read()
+             parsed_cat = json.loads(response)
+             if len(parsed_cat) > 0:
+                 image_list = parsed_cat['images']
+@@ -395,17 +395,17 @@
+                     # more param checking now
+                     if image['single-kernel']=='True':
+                         if self.cli_options.kernel_type:
+-                            print >> sys.stderr, "The -k option will be ignored because the image is single-kernel"
++                            print("The -k option will be ignored because the image is single-kernel", file=sys.stderr)
+                     else:
+                         # Warn about kernel type for multi-kernel images, but not if already installed
+                         # kernel/ramdisk have been specified.
+                         if not(self.cli_options.kernel_type) and not(self.cli_options.kernel):
+-                            print >> sys.stderr, "Error: The -k option must be specified because this image has separate kernels"
++                            print("Error: The -k option must be specified because this image has separate kernels", file=sys.stderr)
+                             sys.exit(-1)
+-                    print "Downloading Image : ",image['description']
++                    print("Downloading Image : ",image['description'])
+                     imageURL = self.eustore_url+image['url']
+-                    req = urllib2.Request(imageURL, headers=self.ServiceClass.RequestHeaders)
+-                    req = urllib2.urlopen(req)
++                    req = urllib.request.Request(imageURL, headers=self.ServiceClass.RequestHeaders)
++                    req = urllib.request.urlopen(req)
+                     file_size = int(req.info()['Content-Length'])/1000
+                     size_count = 0;
+                     prog_bar = euca2ools.commands.eustore.progressBar(file_size)
+@@ -419,18 +419,18 @@
+                             fp.write(buf)
+                     fp.close()
+                     # validate download by re-computing serial # (name)
+-                    print "Checking image bundle"
++                    print("Checking image bundle")
+                     file = open(fp.name, 'r')
+                     m = hashlib.md5()
+                     m.update(file.read())
+                     hash = m.hexdigest()
+-                    crc = str(zlib.crc32(hash)& 0xffffffffL)
++                    crc = str(zlib.crc32(hash)& 0xffffffff)
+                     if image['name'] == crc.rjust(10,"0"):
+-                        print "Installed image: "+self.bundleAll(fp.name, None, image['description'], image['architecture'])
++                        print("Installed image: "+self.bundleAll(fp.name, None, image['description'], image['architecture']))
+                     else:
+-                        print >> sys.stderr, "Error: Downloaded image was incomplete or corrupt, please try again"
++                        print("Error: Downloaded image was incomplete or corrupt, please try again", file=sys.stderr)
+                 else:
+-                    print >> sys.stderr, "Image name not found, please run eustore-describe-images"
++                    print("Image name not found, please run eustore-describe-images", file=sys.stderr)
+ 
+     def main_cli(self):
+         euca2ools.utils.print_version_if_necessary()
+--- ./nc/auth.py	(original)
++++ ./nc/auth.py	(refactored)
+@@ -37,7 +37,7 @@
+ import hashlib
+ import hmac
+ import time
+-import urllib
++import urllib.request, urllib.parse, urllib.error
+ import warnings
+ from boto.exception import BotoClientError
+ 
+@@ -54,12 +54,12 @@
+     def _calc_signature(self, params, headers, verb, path):
+         boto.log.debug('using euca_signature')
+         string_to_sign = '%s\n%s\n%s\n' % (verb, headers['Date'], path)
+-        keys = params.keys()
++        keys = list(params.keys())
+         keys.sort()
+         pairs = []
+         for key in keys:
+             val = params[key]
+-            pairs.append(urllib.quote(key, safe='') + '=' + urllib.quote(val, safe='-_~'))
++            pairs.append(urllib.parse.quote(key, safe='') + '=' + urllib.parse.quote(val, safe='-_~'))
+         qs = '&'.join(pairs)
+         boto.log.debug('query string: %s' % qs)
+         string_to_sign += qs
+@@ -159,21 +159,21 @@
+ 
+     def _get_canonical_querystr(self, http_request):
+         params = []
+-        for key, val in http_request.params.iteritems():
+-            params.append(urllib.quote(param,    safe='/~') + '=' +
+-                          urllib.quote(str(val), safe='~'))
++        for key, val in http_request.params.items():
++            params.append(urllib.parse.quote(param,    safe='/~') + '=' +
++                          urllib.parse.quote(str(val), safe='~'))
+         return '&'.join(sorted(params))
+ 
+     def _get_headers_to_sign(self, http_request):
+         headers = {'Host': http_request.host}
+-        for key, val in http_request.headers.iteritems():
++        for key, val in http_request.headers.items():
+             if key.lower() != 'authorization':
+                 headers[key] = val
+         return headers
+ 
+     def _get_canonical_headers(self, headers):
+         header_strs = [key.lower().strip() + ':' + val.strip()
+-                       for key, val in headers.iteritems()]
++                       for key, val in headers.items()]
+         return '\n'.join(sorted(header_strs))
+ 
+     def _get_signed_headers(self, headers):
+--- ./nc/connection.py	(original)
++++ ./nc/connection.py	(refactored)
+@@ -35,7 +35,7 @@
+ import boto
+ import hashlib
+ import time
+-import urllib
++import urllib.request, urllib.parse, urllib.error
+ from boto.connection import AWSAuthConnection
+ from boto.exception import BotoClientError, S3ResponseError, S3CreateError
+ from boto.resultset import ResultSet
+@@ -93,7 +93,7 @@
+             utf8_params[key] = self.get_utf8_value(params[key])
+         path_base = '/'
+         path_base += "%s/" % bucket
+-        path = path_base + urllib.quote(key)
++        path = path_base + urllib.parse.quote(key)
+         http_request = self.build_base_http_request(method, path, None,
+                                                     utf8_params,
+                                                     headers, data,
