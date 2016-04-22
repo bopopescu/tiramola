@@ -1,0 +1,2 @@
+TIRAMOLA provides a framework to exploit the elastic behavior of modern NoSQL databases in the cloud. It currently supports creation, monitoring, increasing and decreasing the size of the DB cluster based on user-defined metrics.
+It is dependant on Ganglia for VM monitoring and currently supports HBase and Cassandra. Voldemort and RIAK support is in the works.
