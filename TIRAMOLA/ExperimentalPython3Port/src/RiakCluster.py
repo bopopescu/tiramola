@@ -43,8 +43,8 @@ class RiakCluster(object):
                     self.cluster = self.utils.get_cluster_from_db(self.cluster_id)
     #                print self.cluster
                     for clusterkey in list(self.cluster.keys()):
-                        if not (clusterkey.find("master") == -1):
-                            self.host_template = clusterkey.replace("master","")
+                        if not (clusterkey.find("main") == -1):
+                            self.host_template = clusterkey.replace("main","")
                     # Add self to db (eliminates existing records of same id)
                     self.utils.add_to_cluster_db(self.cluster, self.cluster_id)
                 else:
@@ -141,7 +141,7 @@ class RiakCluster(object):
         name = ""
         i = len(self.cluster) 
         if i == 0:
-            name = self.host_template+"master"
+            name = self.host_template+"main"
         else: 
             name = self.host_template+str(i)
         
@@ -191,9 +191,9 @@ class RiakCluster(object):
             time.sleep(15)
 #            stdin, stdout, stderr = ssh.exec_command('/usr/sbin/riaksearch-admin join riak@' +
             stdin, stdout, stderr = ssh.exec_command('riak-admin join riak@' +
-                                        self.cluster.get(self.host_template+"master").public_dns_name)
-#            print '/usr/sbin/riaksearch-admin join riak@' + self.cluster.get(self.host_template+"master").public_dns_name
-            print(('riak-admin join riak@' + self.cluster.get(self.host_template+"master").public_dns_name))
+                                        self.cluster.get(self.host_template+"main").public_dns_name)
+#            print '/usr/sbin/riaksearch-admin join riak@' + self.cluster.get(self.host_template+"main").public_dns_name
+            print(('riak-admin join riak@' + self.cluster.get(self.host_template+"main").public_dns_name))
             print((stdout.readlines()))
             sys.stdout.flush()
         

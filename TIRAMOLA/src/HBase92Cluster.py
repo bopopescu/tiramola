@@ -44,8 +44,8 @@ class HBase92Cluster(object):
                     self.cluster = self.utils.get_cluster_from_db(self.cluster_id)
     #                print self.cluster
                     for clusterkey in self.cluster.keys():
-                        if not (clusterkey.find("master") == -1):
-                            self.host_template = clusterkey.replace("master","")
+                        if not (clusterkey.find("main") == -1):
+                            self.host_template = clusterkey.replace("main","")
                     # Add self to db (eliminates existing records of same id)
                     self.utils.add_to_cluster_db(self.cluster, self.cluster_id)
                 else:
@@ -78,8 +78,8 @@ class HBase92Cluster(object):
         ## can not connect/have incorrect installed versions and/or paths 
 
         hosts = open('/tmp/hosts', 'w')
-        masters = open('/tmp/masters', 'w')
-        slaves = open('/tmp/slaves', 'w')
+        mains = open('/tmp/mains', 'w')
+        subordinates = open('/tmp/subordinates', 'w')
         
         # copy necessary templates to /tmp to alter them
         shutil.copy("./templates/hadoop101/core-site.xml", "/tmp/core-site.xml")
@@ -125,28 +125,28 @@ class HBase92Cluster(object):
                     return
             
             if i==0:
-                # Add the master to the /etc/hosts file
-                hosts.write(node.private_dns_name + "\t" + host_template+"master\n")
-                # Add the master to the masters file
-                masters.write(host_template+"master\n")
+                # Add the main to the /etc/hosts file
+                hosts.write(node.private_dns_name + "\t" + host_template+"main\n")
+                # Add the main to the mains file
+                mains.write(host_template+"main\n")
                 # Set hostname on the machine
-                stdin, stdout, stderr = ssh.exec_command('echo \"'+host_template+"master\" > /etc/hostname")
-                stdin, stdout, stderr = ssh.exec_command('hostname \"'+host_template+"master\"")
+                stdin, stdout, stderr = ssh.exec_command('echo \"'+host_template+"main\" > /etc/hostname")
+                stdin, stdout, stderr = ssh.exec_command('hostname \"'+host_template+"main\"")
                 
                 for line in fileinput.FileInput(core_site,inplace=1):
-                    line = line.replace("NAMENODE_IP",host_template+"master").strip()
+                    line = line.replace("NAMENODE_IP",host_template+"main").strip()
                     print line
                 for line in fileinput.FileInput(hbase_site,inplace=1):
-                    line = line.replace("NAMENODE_IP",host_template+"master").strip()
+                    line = line.replace("NAMENODE_IP",host_template+"main").strip()
                     print line
                 for line in fileinput.FileInput(mapred_site,inplace=1):
-                    line = line.replace("JOBTRACKER_IP",host_template+"master").strip()
+                    line = line.replace("JOBTRACKER_IP",host_template+"main").strip()
                     print line
                 for line in fileinput.FileInput(hadoop_properties,inplace=1):
-                    line = line.replace("GMETADHOST_IP",host_template+"master").strip()
+                    line = line.replace("GMETADHOST_IP",host_template+"main").strip()
                     print line
                 for line in fileinput.FileInput(hbase_properties,inplace=1):
-                    line = line.replace("GMETADHOST_IP",host_template+"master").strip()
+                    line = line.replace("GMETADHOST_IP",host_template+"main").strip()
                     print line
                 
                 ## create namenode/datanode dirs
@@ -154,14 +154,14 @@ class HBase92Cluster(object):
                 stdin, stdout, stderr = ssh.exec_command('mkdir /opt/hadooptmp/')
                 
                 # Add node to cluster
-                self.cluster[host_template+"master"] = node
+                self.cluster[host_template+"main"] = node
                 
             else:
                 # Make a /etc/hosts file as you go
                 hosts.write(node.private_dns_name + "\t" + host_template + str(i) +"\n")
                 
-                # Add all to the slaves file
-                slaves.write(host_template+ str(i)+"\n")
+                # Add all to the subordinates file
+                subordinates.write(host_template+ str(i)+"\n")
                 
                 # Set hostname on the machine
                 stdin, stdout, stderr = ssh.exec_command('echo \"'+host_template+str(i)+"\" > /etc/hostname")
@@ -187,20 +187,20 @@ class HBase92Cluster(object):
         # Decrase to have the last node in i
         i = i-1
         
-        # Add the last node to the masters file (secondary namenode)
-        masters.write(host_template+ str(i)+"\n")
+        # Add the last node to the mains file (secondary namenode)
+        mains.write(host_template+ str(i)+"\n")
         
         ## make the quorum
         if self.quorum=="":
-#            self.quorum = host_template+"master,"+host_template+str((int(self.utils.initial_cluster_size)/2))+","+host_template+str(int(self.utils.initial_cluster_size)-1)
-            self.quorum = host_template+"master"
+#            self.quorum = host_template+"main,"+host_template+str((int(self.utils.initial_cluster_size)/2))+","+host_template+str(int(self.utils.initial_cluster_size)-1)
+            self.quorum = host_template+"main"
         for line in fileinput.FileInput(hbase_site,inplace=1):
             line = line.replace("ZK_QUORUM_IPs", self.quorum ).strip()
             print line
             
         hosts.close()
-        masters.close()
-        slaves.close()
+        mains.close()
+        subordinates.close()
         
         key_template_path="./templates/ssh_keys"
         
@@ -235,7 +235,7 @@ class HBase92Cluster(object):
             stdin, stdout, stderr = ssh.exec_command('cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys')
 #            print stdout.readlines()
             
-            # Copy files (/etc/hosts, masters, slaves and conf templates) removing empty lines
+            # Copy files (/etc/hosts, mains, subordinates and conf templates) removing empty lines
             sftp.put( "/tmp/hosts", "/etc/hosts")
             os.system("sed -i '/^$/d' /tmp/core-site.xml")
             sftp.put( "/tmp/core-site.xml","/opt/hadoop-1.0.1/conf/core-site.xml")
@@ -243,12 +243,12 @@ class HBase92Cluster(object):
             sftp.put( "/tmp/mapred-site.xml","/opt/hadoop-1.0.1/conf/mapred-site.xml")
             os.system("sed -i '/^$/d' /tmp/hdfs-site.xml")
             sftp.put( "/tmp/hdfs-site.xml","/opt/hadoop-1.0.1/conf/hdfs-site.xml")
-            sftp.put( "/tmp/masters", "/opt/hadoop-1.0.1/conf/masters")
-            sftp.put( "/tmp/slaves", "/opt/hadoop-1.0.1/conf/slaves")
+            sftp.put( "/tmp/mains", "/opt/hadoop-1.0.1/conf/mains")
+            sftp.put( "/tmp/subordinates", "/opt/hadoop-1.0.1/conf/subordinates")
             os.system("sed -i '/^$/d' /tmp/hbase-site.xml")
             sftp.put( "/tmp/hbase-site.xml", "/opt/hbase-0.92.0/conf/hbase-site.xml")
             sftp.put( "/tmp/hbase-site.xml", "/opt/hadoop-1.0.1/conf/hbase-site.xml")
-            sftp.put( "/tmp/slaves", "/opt/hbase-0.92.0/conf/regionservers")
+            sftp.put( "/tmp/subordinates", "/opt/hbase-0.92.0/conf/regionservers")
             sftp.put( "/tmp/hbase-env.sh", "/opt/hbase-0.92.0/conf/hbase-env.sh")
             sftp.put( "/tmp/hadoop-env.sh", "/opt/hadoop-1.0.1/conf/hadoop-env.sh")
             sftp.put( "/tmp/hadoop-metrics2.properties", "/opt/hadoop-1.0.1/conf/hadoop-metrics2.properties")
@@ -289,10 +289,10 @@ class HBase92Cluster(object):
             sftp.put( "/tmp/known_hosts", "/root/.ssh/known_hosts")
             sftp.close()
         
-        ## Format namenode on the master
+        ## Format namenode on the main
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.cluster[host_template+"master"].public_dns_name, username='root', password='secretpw')
+        ssh.connect(self.cluster[host_template+"main"].public_dns_name, username='root', password='secretpw')
         if not reconfigure:
             ## format the namenode (all previous data will be lost!!!
             stdin, stdout, stderr = ssh.exec_command('echo "Y" | /opt/hadoop-1.0.1/bin/hadoop namenode -format')
@@ -310,9 +310,9 @@ class HBase92Cluster(object):
     def start_cluster (self):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-#        print self.host_template+"master"
-#        print self.cluster[self.host_template+"master"].public_dns_name
-        ssh.connect(self.cluster[self.host_template+"master"].public_dns_name, username='root', password='secretpw')
+#        print self.host_template+"main"
+#        print self.cluster[self.host_template+"main"].public_dns_name
+        ssh.connect(self.cluster[self.host_template+"main"].public_dns_name, username='root', password='secretpw')
         stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-1.0.1/bin/start-dfs.sh')
         self.my_logger.debug(str(stdout.readlines()))
         stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-1.0.1/bin/start-mapred.sh')
@@ -332,9 +332,9 @@ class HBase92Cluster(object):
     def stop_cluster (self):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-#        print self.host_template+"master"
-#        print self.cluster[self.host_template+"master"].public_dns_name
-        ssh.connect(self.cluster[self.host_template+"master"].public_dns_name, username='root', password='secretpw')
+#        print self.host_template+"main"
+#        print self.cluster[self.host_template+"main"].public_dns_name
+        ssh.connect(self.cluster[self.host_template+"main"].public_dns_name, username='root', password='secretpw')
         
         # Manipulation to stop H2RDF servers
         stdin, stdout, stderr = ssh.exec_command('/opt/stopH2RDF.sh')
@@ -352,7 +352,7 @@ class HBase92Cluster(object):
     def add_nodes (self, new_nodes = None):
         ## Reconfigure the cluster with the last node as the provided one
         nodes = []
-        nodes.append(self.cluster[self.host_template+"master"])
+        nodes.append(self.cluster[self.host_template+"main"])
         for i in range(1,len(self.cluster)):
             nodes.append(self.cluster[self.host_template+str(i)])
         nodes.extend(new_nodes)
@@ -373,7 +373,7 @@ class HBase92Cluster(object):
     def remove_node (self, hostname=""):
         ## Remove node by hostname -- DOES NOST REMOVE THE MASTER
         nodes = []
-        nodes.append(self.cluster[self.host_template+"master"])
+        nodes.append(self.cluster[self.host_template+"main"])
         for i in range(1,len(self.cluster)):
             if not (self.host_template+str(i)).endswith(hostname):
                 nodes.append(self.cluster[self.host_template+str(i)])
@@ -413,7 +413,7 @@ class HBase92Cluster(object):
 #########
 
         ## Run compaction on all tables
-        child = pexpect.spawn('ssh root@'+self.cluster[self.host_template+"master"].public_dns_name)
+        child = pexpect.spawn('ssh root@'+self.cluster[self.host_template+"main"].public_dns_name)
         child.expect ('password:')
         child.sendline ('secretpw')
         child.expect (':~#')
@@ -428,11 +428,11 @@ class HBase92Cluster(object):
             got = child.readline()
         child.close()
         for table in tables:
-            os.system("curl \"http://"+self.cluster[self.host_template+"master"].public_dns_name+":60010/table.jsp?action=compact&name="+table+"&key=\"")
+            os.system("curl \"http://"+self.cluster[self.host_template+"main"].public_dns_name+":60010/table.jsp?action=compact&name="+table+"&key=\"")
 
        
         ## start HDFS balancer
-#        ssh.connect(self.cluster[self.host_template+"master"].public_dns_name, username='root', password='secretpw')
+#        ssh.connect(self.cluster[self.host_template+"main"].public_dns_name, username='root', password='secretpw')
 #        stdin, stdout, stderr = ssh.exec_command('/opt/hadoop-0.20.2/bin/start-balancer.sh -threshold '+ str(threshold))
 #        print stdout.readlines()
         
@@ -444,7 +444,7 @@ class HBase92Cluster(object):
 #        
 #        ## make the quorum
 #        for line in fileinput.FileInput(hbase_site,inplace=1):
-#            line = line.replace("ZK_QUORUM_IPs", self.host_template+"master,"+self.host_template+str((len(self.cluster.keys())/2)+1)+","+self.host_template+str(len(self.cluster.keys()-1))).strip()
+#            line = line.replace("ZK_QUORUM_IPs", self.host_template+"main,"+self.host_template+str((len(self.cluster.keys())/2)+1)+","+self.host_template+str(len(self.cluster.keys()-1))).strip()
 #            print line
 #            
 #        ## make the balancing
@@ -462,10 +462,10 @@ class HBase92Cluster(object):
 #            sftp.close()
 #        
 #        ## Restart hbase (stop-start)
-#        ssh.connect(self.cluster[self.host_template+"master"].public_dns_name, username='root', password='secretpw')
+#        ssh.connect(self.cluster[self.host_template+"main"].public_dns_name, username='root', password='secretpw')
 #        stdin, stdout, stderr = ssh.exec_command('/opt/hbase-0.20.6/bin/stop-hbase.sh')
 #        print stdout.readlines()
-#        ssh.connect(self.cluster[self.host_template+"master"].public_dns_name, username='root', password='secretpw')
+#        ssh.connect(self.cluster[self.host_template+"main"].public_dns_name, username='root', password='secretpw')
 #        stdin, stdout, stderr = ssh.exec_command('/opt/hbase-0.20.6/bin/start-hbase.sh')
 #        print stdout.readlines()
         

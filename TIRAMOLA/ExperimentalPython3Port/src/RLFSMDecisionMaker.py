@@ -310,13 +310,13 @@ class RLFSMDecisionMaker():
 #        self.addMeasurement([str(self.currentState), allmetrics['inlambda'], allmetrics['throughput'], allmetrics['latency'], 
 #                             allmetrics['cpu'], datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")], True)
         
-        self.my_logger.debug("gmetric -n ycsb_throughput -v "+ str(allmetrics['throughput'])+" -d 15 -t float -u 'reqs/sec' -S "+ str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"master"].private_dns_name) +":" +str(self.utils.hostname_template)+ "master")
+        self.my_logger.debug("gmetric -n ycsb_throughput -v "+ str(allmetrics['throughput'])+" -d 15 -t float -u 'reqs/sec' -S "+ str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"main"].private_dns_name) +":" +str(self.utils.hostname_template)+ "main")
         # Publish measurements to ganglia
         try:
-            os.system("gmetric -n ycsb_inlambda -v "+ str(allmetrics['inlambda'])+" -d 15 -t float -u 'reqs/sec' -S "+ str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"master"].private_dns_name) +":" +str(self.utils.hostname_template)+ "master")
-            os.system("gmetric -n ycsb_throughput -v "+ str(allmetrics['throughput'])+" -d 15 -t float -u 'reqs/sec' -S "+ str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"master"].private_dns_name) +":" +str(self.utils.hostname_template)+ "master")
-            os.system("gmetric -n ycsb_latency -v "+ str(allmetrics['latency']) + " -d 15 -t float -u ms -S " +  str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"master"].private_dns_name) +":" +str(self.utils.hostname_template)+ "master")
-            os.system("gmetric -n ycsb_cpu -v "+ str(allmetrics['CPU']) + " -d 15 -t float -u 'Percent' -S " +  str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"master"].private_dns_name) +":" +str(self.utils.hostname_template)+ "master")            
+            os.system("gmetric -n ycsb_inlambda -v "+ str(allmetrics['inlambda'])+" -d 15 -t float -u 'reqs/sec' -S "+ str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"main"].private_dns_name) +":" +str(self.utils.hostname_template)+ "main")
+            os.system("gmetric -n ycsb_throughput -v "+ str(allmetrics['throughput'])+" -d 15 -t float -u 'reqs/sec' -S "+ str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"main"].private_dns_name) +":" +str(self.utils.hostname_template)+ "main")
+            os.system("gmetric -n ycsb_latency -v "+ str(allmetrics['latency']) + " -d 15 -t float -u ms -S " +  str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"main"].private_dns_name) +":" +str(self.utils.hostname_template)+ "main")
+            os.system("gmetric -n ycsb_cpu -v "+ str(allmetrics['CPU']) + " -d 15 -t float -u 'Percent' -S " +  str(self.NoSQLCluster.cluster[str(self.utils.hostname_template)+"main"].private_dns_name) +":" +str(self.utils.hostname_template)+ "main")            
         except:
             pass
             
@@ -695,8 +695,8 @@ class PolicyManager(object):
                 self.my_logger.debug("Ganglia configuration is done!! State Changed!")
                 self.my_logger.debug("Go to sleep for 5 mins.")
                 time.sleep(300)
-                self.my_logger.debug("Restart master: ")
-                self.NoSQLCluster.restart_master()
+                self.my_logger.debug("Restart main: ")
+                self.NoSQLCluster.restart_main()
                 self.my_logger.debug("Unblock decision making!")
                 acted.pop()
             if action == "remove":
@@ -737,8 +737,8 @@ class PolicyManager(object):
                 self.my_logger.debug("Ganglia configuration is done!! State Changed!")
                 self.my_logger.debug("Go to sleep for 10 mins.")
                 time.sleep(600)
-                self.my_logger.debug("Restart master: ")
-                self.NoSQLCluster.restart_master()
+                self.my_logger.debug("Restart main: ")
+                self.NoSQLCluster.restart_main()
                 self.my_logger.debug("Unblock decision making!")
                 acted.pop() 
 #            if not action == "none":

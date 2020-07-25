@@ -47,8 +47,8 @@ class VoldemortCluster(object):
                     self.cluster = self.utils.get_cluster_from_db(self.cluster_id)
     #                print self.cluster
                     for clusterkey in list(self.cluster.keys()):
-                        if not (clusterkey.find("master") == -1):
-                            self.host_template = clusterkey.replace("master","")
+                        if not (clusterkey.find("main") == -1):
+                            self.host_template = clusterkey.replace("main","")
                     # Add self to db (eliminates existing records of same id)
                     self.utils.add_to_cluster_db(self.cluster, self.cluster_id)
                 else:
@@ -166,7 +166,7 @@ class VoldemortCluster(object):
         
         maxId = 0
         for (nodekey, mynode) in list(self.cluster.items()):
-            if not nodekey.endswith("master"):
+            if not nodekey.endswith("main"):
                 strId = nodekey.replace(self.host_template, '')
                 if int(strId) > maxId:
                     maxId = int(strId)
@@ -218,7 +218,7 @@ class VoldemortCluster(object):
         
         maxId = 0
         for (nodekey, mynode) in list(self.cluster.items()):
-            if not nodekey.endswith("master"):
+            if not nodekey.endswith("main"):
                 strId = nodekey.replace(self.host_template, '')
                 if int(strId) > maxId:
                     maxId = int(strId)
@@ -273,7 +273,7 @@ class VoldemortCluster(object):
     
     def remove_node (self, hostname=""):
         ## Remove node by hostname -- DOES NOT REMOVE THE MASTER
-        if hostname.endswith("master"):
+        if hostname.endswith("main"):
             print(("Will NOT remove node "+ hostname))
             return
         
@@ -282,7 +282,7 @@ class VoldemortCluster(object):
         remove_node = int(hostname.replace(self.host_template, ''))
         
         current_cluster = '/tmp/current_cluster.xml'
-        # Generate the targetCluster.xml accordingly and send it to master for the rebalancing
+        # Generate the targetCluster.xml accordingly and send it to main for the rebalancing
         maxId = self.generate_rebalancing_cluster_xmls(current_cluster, remove_node)
         
         # !!!! Does the decision maker call rebalance too???
@@ -316,7 +316,7 @@ class VoldemortCluster(object):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(first_node.public_dns_name, username='root', password='secretpw', timeout=3000000)
     #       stdin, stdout, stderr = ssh.exec_command('/opt/voldemort-0.81/bin/voldemort-rebalance.sh --url tcp://' +
-    #                                                  master.public_dns_name +':6666 --cluster targetCluster.xml '+ 
+    #                                                  main.public_dns_name +':6666 --cluster targetCluster.xml '+ 
     #                                                  '--parallelism '+ str(2) +' &>> /var/log/voldemort/rebalance.log &')
     
         stdin, stdout, stderr = ssh.exec_command('/opt/voldemort-0.81/bin/voldemort-rebalance.sh --url tcp://' +
@@ -324,7 +324,7 @@ class VoldemortCluster(object):
                                                      # first_node.private_dns_name +':6666 --cluster targetCluster.xml '+
                                                       '--parallelism '+ str(10) +' &>> /var/log/voldemort/rebalance.log')
         print("Sent rebalancing command: /opt/voldemort-0.81/bin/voldemort-rebalance.sh --url ") 
-    #        + master.public_dns_name +' --cluster targetCluster.xml '
+    #        + main.public_dns_name +' --cluster targetCluster.xml '
     #        + '--parallelism '+ str(2) +' &>> /var/log/voldemort/rebalance.log &'
         ssh.close()
         return True
@@ -340,8 +340,8 @@ class VoldemortCluster(object):
 
         for id in ids:
             if id == 0:
-                node_ip = self.cluster[self.host_template+"master"].public_dns_name
-                #node_ip = self.cluster[self.host_template+"master"].private_dns_name
+                node_ip = self.cluster[self.host_template+"main"].public_dns_name
+                #node_ip = self.cluster[self.host_template+"main"].private_dns_name
             else:
                 node_ip = self.cluster[self.host_template+str(id)].public_dns_name
                 #node_ip = self.cluster[self.host_template+str(id)].private_dns_name
@@ -360,11 +360,11 @@ class VoldemortCluster(object):
         cluster.close()
 
     def generate_rebalancing_cluster_xmls (self, current_cluster, remove_node=None):
-        # Get the current cluster.xml file from the master node
-        master = self.cluster[self.host_template+"master"]
-        transport = paramiko.Transport((master.public_dns_name, 22))
+        # Get the current cluster.xml file from the main node
+        main = self.cluster[self.host_template+"main"]
+        transport = paramiko.Transport((main.public_dns_name, 22))
         transport.connect(username = 'root', password = 'secretpw')
-        transport.open_channel("session", master.public_dns_name, "localhost")
+        transport.open_channel("session", main.public_dns_name, "localhost")
         sftp = paramiko.SFTPClient.from_transport(transport)
         sftp.get("/opt/voldemort-0.81/config/euca_config/config/cluster.xml", current_cluster)
         
@@ -450,7 +450,7 @@ class VoldemortCluster(object):
         target_cluster = '/tmp/target_cluster.xml'
 
         self.generate_cluster_xml(node_partitions, target_cluster)
-        # Send it to master for the rebalancing
+        # Send it to main for the rebalancing
         sftp.put(target_cluster, "/root/targetCluster.xml")
         sftp.close()
         transport.close()
@@ -458,11 +458,11 @@ class VoldemortCluster(object):
         return maxId
     
     def generate_rebalancing_multinode_cluster_xmls (self, current_cluster, nodes_num=1, remove_node=None):
-        # Get the current cluster.xml file from the master node
-        master = self.cluster[self.host_template+"master"]
-        transport = paramiko.Transport((master.public_dns_name, 22))
+        # Get the current cluster.xml file from the main node
+        main = self.cluster[self.host_template+"main"]
+        transport = paramiko.Transport((main.public_dns_name, 22))
         transport.connect(username = 'root', password = 'secretpw')
-        transport.open_channel("session", master.public_dns_name, "localhost")
+        transport.open_channel("session", main.public_dns_name, "localhost")
         sftp = paramiko.SFTPClient.from_transport(transport)
         sftp.get("/opt/voldemort-0.81/config/euca_config/config/cluster.xml", current_cluster)
         
@@ -562,7 +562,7 @@ class VoldemortCluster(object):
         target_cluster = '/tmp/target_cluster.xml'
 
         self.generate_cluster_xml(node_partitions, target_cluster)
-        # Send it to master for the rebalancing
+        # Send it to main for the rebalancing
         sftp.put(target_cluster, "/root/targetCluster.xml")
         sftp.close()
         transport.close()
@@ -597,7 +597,7 @@ class VoldemortCluster(object):
         # Set hostname on the machine
         name = ""
         if id == 0:
-            name = self.host_template+"master"
+            name = self.host_template+"main"
         else: 
             name = self.host_template+strId
 

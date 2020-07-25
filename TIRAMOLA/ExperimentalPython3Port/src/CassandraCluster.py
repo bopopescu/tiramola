@@ -43,8 +43,8 @@ class CassandraCluster(object):
                     self.cluster = self.utils.get_cluster_from_db(self.cluster_id)
     #                print self.cluster
                     for clusterkey in list(self.cluster.keys()):
-                        if not (clusterkey.find("master") == -1):
-                            self.host_template = clusterkey.replace("master", "")
+                        if not (clusterkey.find("main") == -1):
+                            self.host_template = clusterkey.replace("main", "")
                     # Add self to db (eliminates existing records of same id)
                     self.utils.add_to_cluster_db(self.cluster, self.cluster_id)
                 else:
@@ -85,14 +85,14 @@ class CassandraCluster(object):
                     return
             
             if i == 0:
-                # Add the master to the /etc/hosts file
-                hosts.write(node.public_dns_name + "\t" + host_template + "master\n")
+                # Add the main to the /etc/hosts file
+                hosts.write(node.public_dns_name + "\t" + host_template + "main\n")
                 # Set hostname on the machine
-                stdin, stdout, stderr = ssh.exec_command('echo \"' + host_template + "master\" > /etc/hostname")
-                stdin, stdout, stderr = ssh.exec_command('hostname \"' + host_template + "master\"")
+                stdin, stdout, stderr = ssh.exec_command('echo \"' + host_template + "main\" > /etc/hostname")
+                stdin, stdout, stderr = ssh.exec_command('hostname \"' + host_template + "main\"")
                 
                 # Add node to cluster
-                self.cluster[host_template + "master"] = node
+                self.cluster[host_template + "main"] = node
                 
             else:
                 # Make a /etc/hosts file as you go
@@ -149,7 +149,7 @@ class CassandraCluster(object):
             cassandra_yaml = '/tmp/cassandra.yaml'
             
             # Edit cassandra.yaml to reflect seed changes
-            seeds = host_template + "master"
+            seeds = host_template + "main"
             for j in range(1, i):
                 seeds = seeds + "\n - " + host_template + str(j)
             for line in fileinput.FileInput(cassandra_yaml, inplace=1):
@@ -166,7 +166,7 @@ class CassandraCluster(object):
                 stdin, stdout, stderr = ssh.exec_command('rm -fr /var/lib/cassandra/data/')
                 
             
-            # Copy files (/etc/hosts, masters, slaves and conf templates)
+            # Copy files (/etc/hosts, mains, subordinates and conf templates)
             sftp.put("/tmp/hosts", "/etc/hosts")
 #            os.system("sed -i '/^$/d' /tmp/cassandra.yaml")
             sftp.put('/tmp/cassandra.yaml', "/opt/apache-cassandra-0.7.0-beta1/conf/cassandra.yaml")
@@ -234,7 +234,7 @@ class CassandraCluster(object):
     def add_nodes (self, new_nodes=None):
         ## Reconfigure the cluster with the last node as the provided one
         nodes = []
-        nodes.append(self.cluster[self.host_template + "master"])
+        nodes.append(self.cluster[self.host_template + "main"])
         for i in range(1, len(self.cluster)):
             nodes.append(self.cluster[self.host_template + str(i)])
         nodes.extend(new_nodes)
@@ -258,7 +258,7 @@ class CassandraCluster(object):
     def remove_node (self, hostname=""):
         ## Remove node by hostname -- DOES NOST REMOVE THE MASTER
         nodes = []
-        nodes.append(self.cluster[self.host_template + "master"])
+        nodes.append(self.cluster[self.host_template + "main"])
         for i in range(1, len(self.cluster)):
             if not (self.host_template + str(i)).endswith(hostname):
                 nodes.append(self.cluster[self.host_template + str(i)])
@@ -295,9 +295,9 @@ class CassandraCluster(object):
         ## /opt/apache-cassandra-0.7.0-beta1/bin/nodetool -host 62.217.120.118 getcompactionthreshold / loadbalance
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(str(self.cluster[self.host_template + "master"].public_dns_name), username='root', password='secretpw')
+        ssh.connect(str(self.cluster[self.host_template + "main"].public_dns_name), username='root', password='secretpw')
         stdin, stdout, stderr = ssh.exec_command('/opt/apache-cassandra-0.7.0-beta1/bin/nodetool -host ' + 
-                                                  str(self.cluster[self.host_template + "master"].public_dns_name) + ' ring')
+                                                  str(self.cluster[self.host_template + "main"].public_dns_name) + ' ring')
         rebalance_ip = ""
         var_min = 100000
         for line in stdout.readlines():

@@ -101,7 +101,7 @@ class MyDaemon(Daemon):
                 instances = eucacluster.block_until_running(instances)
                 self.my_logger.debug("Running instances: " + str(instances))
             else:
-                instances.append(nosqlcluster.cluster[nosqlcluster.host_template+"master"])
+                instances.append(nosqlcluster.cluster[nosqlcluster.host_template+"main"])
                 for i in range(1,len(nosqlcluster.cluster)):
                     instances.append(nosqlcluster.cluster[nosqlcluster.host_template+str(i)])
                 self.my_logger.debug("Found old instances: " + str(instances))

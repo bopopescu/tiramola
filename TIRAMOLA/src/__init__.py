@@ -148,7 +148,7 @@ def main():
 #	
 #	cur.execute(""" insert into clusters(cluster_id, hostname, euca_id ) 
 #                                                    values  (?,?,?)""",
-#                            ("vagos-cassandra", "cassandra-nodes-master", "i-3E260748")
+#                            ("vagos-cassandra", "cassandra-nodes-main", "i-3E260748")
 #                            )
 #	con.commit()
 #		
@@ -183,7 +183,7 @@ def main():
 #	
 #	cur.execute(""" insert into clusters(cluster_id, hostname, euca_id ) 
 #                                                    values  (?,?,?)""",
-#                            ("vagos-hbase", "hbase-nodes-master", "i-319C05AE")
+#                            ("vagos-hbase", "hbase-nodes-main", "i-319C05AE")
 #                            )
 #	con.commit()
 #		

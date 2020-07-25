@@ -88,8 +88,8 @@ class MonitorVms:
         self.cluster = self.utils.get_cluster_from_db(self.utils.cluster_name)
         
         for clusterkey in list(self.cluster.keys()):
-            if clusterkey.endswith("master"):
-                host_template = clusterkey.replace("master","")
+            if clusterkey.endswith("main"):
+                host_template = clusterkey.replace("main","")
                 shutil.copy("./templates/ganglia/gmond.conf", "/tmp/gmond.conf")
                 for line in fileinput.FileInput("/tmp/gmond.conf",inplace=1):
                     line = line.replace("CLUSTER_NAME",host_template+"cluster").strip()
@@ -118,7 +118,7 @@ class MonitorVms:
             sftp.close()
             
             ## Stop - start monitoring on server
-            if clusterkey.endswith("master"):
+            if clusterkey.endswith("main"):
                 stdin, stdout, stderr = ssh.exec_command('/etc/init.d/ganglia-monitor stop')
                 print((stdout.readlines()))
                 stdin, stdout, stderr = ssh.exec_command('/etc/init.d/gmetad stop')
@@ -131,7 +131,7 @@ class MonitorVms:
                 print((stdout.readlines()))
                 self.ganglia_host = node.private_dns_name
             else:
-                ## Stop monitoring master infrastructure if running
+                ## Stop monitoring main infrastructure if running
                 stdin, stdout, stderr = ssh.exec_command('/etc/init.d/ganglia-monitor stop')
                 print((stdout.readlines()))
                 stdin, stdout, stderr = ssh.exec_command('/etc/init.d/gmetad stop')
@@ -155,7 +155,7 @@ class MonitorVms:
             except paramiko.SSHException:
                 print("Failed to invoke shell!")
                 continue
-            if clusterkey.endswith("master"):
+            if clusterkey.endswith("main"):
                 stdin, stdout, stderr = ssh.exec_command('/etc/init.d/gmetad restart')
                 print((stdout.readlines()))
             
@@ -210,7 +210,7 @@ if __name__ == "__main__":
 #        sys.exit(3)
     myUtil = Utils.Utils()
     mycluster = {}
-    mycluster["db-image-master"] = myUtil.return_instance_from_tuple(("i-1","emi-1","62.217.120.125","62.217.120.125","running","eangelou","0","fdsf","c1.xlarge","sometime","Centos","eki-1","eri-1"))
+    mycluster["db-image-main"] = myUtil.return_instance_from_tuple(("i-1","emi-1","62.217.120.125","62.217.120.125","running","eangelou","0","fdsf","c1.xlarge","sometime","Centos","eki-1","eri-1"))
     
     monVms = MonitorVms(mycluster)
     allmetrics=monVms.refreshMetrics()
